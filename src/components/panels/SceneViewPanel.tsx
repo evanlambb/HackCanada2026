@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Viewport } from '../../engine/Viewport';
 import { SceneManager } from '../../engine/SceneManager';
 import { SelectionEngine } from '../../engine/SelectionEngine';
@@ -15,6 +15,74 @@ const tools: { tool: ActiveTool; label: string; key: string }[] = [
   { tool: 'rotate', label: 'Rot', key: 'R' },
   { tool: 'scale', label: 'Scl', key: 'S' },
 ];
+
+function VRButton() {
+  const [supported, setSupported] = useState<boolean | null>(null);
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    if ('xr' in navigator) {
+      (navigator as unknown as { xr: { isSessionSupported(m: string): Promise<boolean> } }).xr
+        .isSessionSupported('immersive-vr')
+        .then(setSupported)
+        .catch(() => setSupported(false));
+    } else {
+      setSupported(false);
+    }
+  }, []);
+
+  const handleClick = async () => {
+    const vp = engineRef.current?.viewport;
+    if (!vp || active) return;
+
+    try {
+      const xr = (navigator as unknown as { xr: XRSystem }).xr;
+      const session = await xr.requestSession('immersive-vr', {
+        optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'],
+      });
+
+      vp.enableXR();
+      await vp.renderer.xr.setSession(session);
+      setActive(true);
+
+      session.addEventListener('end', () => {
+        vp.disableXR();
+        setActive(false);
+      });
+    } catch (err) {
+      console.error('[VR] Failed to start session:', err);
+    }
+  };
+
+  // Still checking — render nothing to avoid layout shift
+  if (supported === null) return null;
+
+  return (
+    <div className="hud-group">
+      <button
+        className={`hud-btn ${active ? 'active' : ''}`}
+        onClick={handleClick}
+        disabled={!supported || active}
+        title={!supported ? 'VR not supported' : active ? 'VR session active' : 'Enter VR'}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          style={{ marginRight: 4, flexShrink: 0 }}
+        >
+          <rect x="2" y="7" width="20" height="12" rx="2" />
+          <circle cx="8" cy="13" r="2" />
+          <circle cx="16" cy="13" r="2" />
+        </svg>
+        {active ? 'VR Active' : 'Enter VR'}
+      </button>
+    </div>
+  );
+}
 
 function SceneHUD() {
   const mode = useEditorStore((s) => s.mode);
@@ -56,6 +124,8 @@ function SceneHUD() {
             Edit<span className="key">Tab</span>
           </button>
         </div>
+
+        <VRButton />
 
         {mode === 'edit' && (
           <div className="hud-group">
