@@ -6,6 +6,7 @@ import type {
   ActiveTool,
   Vec3,
   GeometryType,
+  AnimationData,
 } from './types';
 
 let nextId = 1;
@@ -41,7 +42,8 @@ export interface EditorState {
 
   peekNextId: () => string;
   addObject: (type: GeometryType, position?: Vec3) => string;
-  addImportedObject: (name: string) => string;
+  addImportedObject: (name: string, animations?: AnimationData[]) => string;
+  setActiveAnimation: (objectId: string, animationName: string | null) => void;
   removeObject: (id: string) => void;
   updateObject: (id: string, updates: Partial<SceneObject>) => void;
   setSelection: (ids: string[]) => void;
@@ -105,7 +107,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     return id;
   },
 
-  addImportedObject: (importName) => {
+  addImportedObject: (importName, animations) => {
     const id = generateId();
     const existing = Object.values(get().objects).map((o) => o.name);
     let name = importName;
@@ -126,6 +128,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       children: [],
       parent: null,
       visible: true,
+      animations: animations ?? [],
+      activeAnimation: null,
     };
     set((s) => ({
       objects: { ...s.objects, [id]: obj },
@@ -133,6 +137,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }));
     return id;
   },
+
+  setActiveAnimation: (objectId, animationName) =>
+    set((s) => {
+      if (!s.objects[objectId]) return s;
+      return {
+        objects: {
+          ...s.objects,
+          [objectId]: { ...s.objects[objectId], activeAnimation: animationName },
+        },
+      };
+    }),
 
   removeObject: (id) =>
     set((s) => {

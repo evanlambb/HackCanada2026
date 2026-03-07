@@ -4,6 +4,14 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
+export interface LoadedModel {
+  name: string;
+  geometry: THREE.BufferGeometry;
+  animations: THREE.AnimationClip[];
+  /** Original scene root, only set when animations are present */
+  scene: THREE.Object3D | null;
+}
+
 function extractGeometries(object: THREE.Object3D): THREE.BufferGeometry[] {
   const geos: THREE.BufferGeometry[] = [];
   object.traverse((child) => {
@@ -18,22 +26,25 @@ function extractGeometries(object: THREE.Object3D): THREE.BufferGeometry[] {
   return geos;
 }
 
-export async function loadModelFile(file: File): Promise<{ name: string; geometry: THREE.BufferGeometry }> {
+export async function loadModelFile(file: File): Promise<LoadedModel> {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
   const name = file.name.replace(/\.[^.]+$/, '');
   const arrayBuffer = await file.arrayBuffer();
   const url = URL.createObjectURL(new Blob([arrayBuffer]));
 
   let root: THREE.Object3D;
+  let animations: THREE.AnimationClip[] = [];
 
   try {
     if (ext === 'glb' || ext === 'gltf') {
       const loader = new GLTFLoader();
       const gltf = await loader.loadAsync(url);
       root = gltf.scene;
+      animations = gltf.animations ?? [];
     } else if (ext === 'fbx') {
       const loader = new FBXLoader();
       root = await loader.loadAsync(url);
+      animations = (root as THREE.Group & { animations?: THREE.AnimationClip[] }).animations ?? [];
     } else if (ext === 'obj') {
       const loader = new OBJLoader();
       const text = new TextDecoder().decode(arrayBuffer);
@@ -69,5 +80,10 @@ export async function loadModelFile(file: File): Promise<{ name: string; geometr
     merged.computeBoundingSphere();
   }
 
-  return { name, geometry: merged };
+  return {
+    name,
+    geometry: merged,
+    animations,
+    scene: animations.length > 0 ? root : null,
+  };
 }
