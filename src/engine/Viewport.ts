@@ -9,7 +9,6 @@ export class Viewport {
   container: HTMLDivElement;
 
   private animationId = 0;
-  private resizeObserver: ResizeObserver;
   private renderCallbacks: Array<() => void> = [];
   private lastW = 0;
   private lastH = 0;
@@ -25,7 +24,9 @@ export class Viewport {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setClearColor(0x1a1a2e);
-    this.renderer.setSize(initW, initH);
+    this.renderer.setSize(initW, initH, false);
+    this.renderer.domElement.style.width = '100%';
+    this.renderer.domElement.style.height = '100%';
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
@@ -61,9 +62,6 @@ export class Viewport {
     const dir2 = new THREE.DirectionalLight(0xffffff, 0.5);
     dir2.position.set(-5, 5, -5);
     this.scene.add(dir2);
-
-    this.resizeObserver = new ResizeObserver(() => this.onResize());
-    this.resizeObserver.observe(container);
 
     this.animate();
   }
@@ -104,7 +102,7 @@ export class Viewport {
     this.lastH = h;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
+    this.renderer.setSize(w, h, false);
   }
 
   private animate = () => {
@@ -124,7 +122,6 @@ export class Viewport {
 
   dispose() {
     cancelAnimationFrame(this.animationId);
-    this.resizeObserver.disconnect();
     this.container.removeEventListener('pointerdown', this.onAltPointerDown, true);
     this.container.removeEventListener('pointerup', this.onAltPointerUp, true);
     this.controls.dispose();

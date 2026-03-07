@@ -27,6 +27,7 @@ export class EditModeEngine {
   private grabPlane = new THREE.Plane();
   private grabStartWorld = new THREE.Vector3();
   private grabAxisConstraint: 'X' | 'Y' | 'Z' | null = null;
+  private axisLine: THREE.Line | null = null;
 
   private unsub: () => void;
 
@@ -98,6 +99,7 @@ export class EditModeEngine {
 
   exitEditMode() {
     this.clearOverlays();
+    this.removeAxisLine();
     const mesh = this.getEditMesh();
     if (mesh) {
       const mat = mesh.material as THREE.MeshStandardMaterial;
@@ -294,6 +296,7 @@ export class EditModeEngine {
       this.grabOrigins = null;
       this.grabVertexSet.clear();
       this.grabAxisConstraint = null;
+      this.removeAxisLine();
       this.viewport.renderer.domElement.style.cursor = '';
       return;
     }
@@ -422,11 +425,53 @@ export class EditModeEngine {
     this.grabOrigins = null;
     this.grabVertexSet.clear();
     this.grabAxisConstraint = null;
+    this.removeAxisLine();
     this.viewport.renderer.domElement.style.cursor = '';
   }
 
   setGrabAxisConstraint(axis: 'X' | 'Y' | 'Z' | null) {
     this.grabAxisConstraint = axis;
+    this.updateAxisLine();
+  }
+
+  private updateAxisLine() {
+    if (this.axisLine) {
+      this.viewport.scene.remove(this.axisLine);
+      this.axisLine.geometry.dispose();
+      (this.axisLine.material as THREE.Material).dispose();
+      this.axisLine = null;
+    }
+
+    if (!this.grabAxisConstraint || !this.grabbing) return;
+
+    const colors: Record<string, number> = { X: 0xff4444, Y: 0x44ff44, Z: 0x4488ff };
+    const dirs: Record<string, THREE.Vector3> = {
+      X: new THREE.Vector3(1, 0, 0),
+      Y: new THREE.Vector3(0, 1, 0),
+      Z: new THREE.Vector3(0, 0, 1),
+    };
+    const color = colors[this.grabAxisConstraint];
+    const dir = dirs[this.grabAxisConstraint];
+    const origin = this.grabStartWorld;
+    const len = 50;
+    const pts = [
+      origin.clone().addScaledVector(dir, -len),
+      origin.clone().addScaledVector(dir, len),
+    ];
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color, depthTest: false, linewidth: 1 });
+    this.axisLine = new THREE.Line(geo, mat);
+    this.axisLine.renderOrder = 1000;
+    this.viewport.scene.add(this.axisLine);
+  }
+
+  private removeAxisLine() {
+    if (this.axisLine) {
+      this.viewport.scene.remove(this.axisLine);
+      this.axisLine.geometry.dispose();
+      (this.axisLine.material as THREE.Material).dispose();
+      this.axisLine = null;
+    }
   }
 
   /* ---- picking ---- */
@@ -603,6 +648,7 @@ export class EditModeEngine {
   dispose() {
     this.unsub();
     this.clearOverlays();
+    this.removeAxisLine();
     const el = this.viewport.renderer.domElement;
     el.removeEventListener('pointerdown', this.onDown);
     el.removeEventListener('pointerup', this.onUp);

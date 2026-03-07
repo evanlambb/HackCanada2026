@@ -7,18 +7,15 @@ import type { SceneObject } from '../store/types';
 export class SceneManager {
   viewport: Viewport;
   meshMap = new Map<string, THREE.Mesh>();
-  outlineMap = new Map<string, THREE.LineSegments>();
   private unsub: () => void;
 
   constructor(viewport: Viewport) {
     this.viewport = viewport;
     this.unsub = useEditorStore.subscribe((state, prev) => {
       this.syncObjects(state.objects, prev.objects);
-      this.syncSelection(state.selectedIds, state.mode);
     });
     const s = useEditorStore.getState();
     this.syncObjects(s.objects, {});
-    this.syncSelection(s.selectedIds, s.mode);
   }
 
   private syncObjects(
@@ -63,7 +60,6 @@ export class SceneManager {
       (mesh.material as THREE.Material).dispose();
       this.meshMap.delete(id);
     }
-    this.removeOutline(id);
   }
 
   private updateMesh(obj: SceneObject) {
@@ -75,40 +71,6 @@ export class SceneManager {
     mesh.visible = obj.visible;
     const m = mesh.material as THREE.MeshStandardMaterial;
     if ('#' + m.color.getHexString() !== obj.color) m.color.set(obj.color);
-  }
-
-  private syncSelection(ids: string[], mode: string) {
-    const set = new Set(ids);
-    for (const [id] of this.outlineMap) {
-      if (!set.has(id)) this.removeOutline(id);
-    }
-    if (mode === 'object') {
-      for (const id of ids) {
-        if (!this.outlineMap.has(id)) this.addOutline(id);
-      }
-    }
-  }
-
-  private addOutline(id: string) {
-    const mesh = this.meshMap.get(id);
-    if (!mesh) return;
-    const edges = new THREE.EdgesGeometry(mesh.geometry);
-    const line = new THREE.LineSegments(
-      edges,
-      new THREE.LineBasicMaterial({ color: 0x4a90d9 }),
-    );
-    mesh.add(line);
-    this.outlineMap.set(id, line);
-  }
-
-  private removeOutline(id: string) {
-    const o = this.outlineMap.get(id);
-    if (o) {
-      o.parent?.remove(o);
-      o.geometry.dispose();
-      (o.material as THREE.Material).dispose();
-      this.outlineMap.delete(id);
-    }
   }
 
   getMeshById(id: string) {
@@ -124,10 +86,6 @@ export class SceneManager {
     if (!mesh) return;
     mesh.geometry.dispose();
     mesh.geometry = geo;
-    if (this.outlineMap.has(id)) {
-      this.removeOutline(id);
-      this.addOutline(id);
-    }
   }
 
   dispose() {
