@@ -1,7 +1,9 @@
 import { useRef } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { useEditorStore } from '../../store/editorStore';
 import { sceneComposer, type ComposerData, type ComposerObject } from '../../engine/SceneComposer';
+
+const GEMINI_BASE = '/api/gemini';
+const MODEL = 'gemini-2.5-flash';
 
 const COMPOSE_SYSTEM_PROMPT = `You are a 3D scene composition assistant. Generate a JSON structure for character blocking using primitive shapes. You can generate ANY character type: humanoids, quadrupeds, creatures, robots, animals, fantasy beings, etc.
 
@@ -64,9 +66,6 @@ async function callCompose(
   existingScene?: ComposerObject[],
   selectedObject?: string,
 ): Promise<ComposerObject[]> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
-  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not set in .env');
-
   let userContent = '';
   if (existingScene && existingScene.length > 0) {
     userContent += `Current scene:\n${JSON.stringify(existingScene, null, 2)}\n\n`;
@@ -79,8 +78,7 @@ async function callCompose(
     userContent += `Generate character blocking for: ${prompt}`;
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const parts: import('@google/genai').Part[] = [];
+  const parts: Array<Record<string, unknown>> = [];
 
   if (image) {
     let base64 = image;
@@ -89,12 +87,25 @@ async function callCompose(
   }
   parts.push({ text: `${COMPOSE_SYSTEM_PROMPT}\n\nUser request: ${userContent}` });
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: { role: 'user', parts },
+  const res = await fetch(`${GEMINI_BASE}/models/${MODEL}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 4096,
+      },
+    }),
   });
 
-  const text = response.text ?? '';
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini error ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
   const parsed = JSON.parse(extractJSON(text)) as { objects: ComposerObject[] };
   if (!parsed.objects || !Array.isArray(parsed.objects)) throw new Error('Invalid response format');
   return parsed.objects;

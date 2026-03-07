@@ -68,7 +68,7 @@ const layoutJson: IJsonModel = {
         weight: 24,
         children: [
           { type: 'tab', name: 'Inspector', component: 'inspector' },
-          { type: 'tab', name: 'Enhance', component: 'enhance' },
+          { type: 'tab', name: 'Image Gen', component: 'enhance' },
         ],
       },
     ],

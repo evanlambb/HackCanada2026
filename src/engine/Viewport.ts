@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
 
 export class Viewport {
   renderer: THREE.WebGLRenderer;
@@ -10,7 +11,6 @@ export class Viewport {
 
   private gridHelper: THREE.GridHelper;
   private axesHelper: THREE.AxesHelper;
-  private animationId = 0;
   private renderCallbacks: Array<() => void> = [];
   private lastW = 0;
   private lastH = 0;
@@ -31,7 +31,13 @@ export class Viewport {
     this.renderer.setSize(initW, initH, false);
     this.renderer.domElement.style.width = '100%';
     this.renderer.domElement.style.height = '100%';
+    this.renderer.xr.enabled = true;
+    this.renderer.xr.setReferenceSpaceType('local-floor');
     container.appendChild(this.renderer.domElement);
+
+    const vrBtn = VRButton.createButton(this.renderer);
+    vrBtn.classList.add('vr-button');
+    container.appendChild(vrBtn);
 
     this.scene = new THREE.Scene();
 
@@ -67,7 +73,7 @@ export class Viewport {
     dir2.position.set(-5, 5, -5);
     this.scene.add(dir2);
 
-    this.animate();
+    this.renderer.setAnimationLoop(this.animate);
   }
 
   getDelta() {
@@ -177,7 +183,6 @@ export class Viewport {
   }
 
   private animate = () => {
-    this.animationId = requestAnimationFrame(this.animate);
     this._lastDelta = this.clock.getDelta();
 
     // Safety-net: detect size mismatch each frame (fixes FlexLayout late layout)
@@ -193,7 +198,7 @@ export class Viewport {
   };
 
   dispose() {
-    cancelAnimationFrame(this.animationId);
+    this.renderer.setAnimationLoop(null);
     this.container.removeEventListener('pointerdown', this.onAltPointerDown, true);
     this.container.removeEventListener('pointerup', this.onAltPointerUp, true);
     this.controls.dispose();

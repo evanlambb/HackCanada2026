@@ -65,9 +65,9 @@ export class SceneManager {
     const store = useEditorStore.getState();
     const id = store.peekNextId();
 
-    if (scene && clips.length > 0) {
+    if (scene) {
       this.sceneCache.set(id, scene);
-      this.clipsCache.set(id, clips);
+      if (clips.length > 0) this.clipsCache.set(id, clips);
     } else {
       this.geometryCache.set(id, geometry);
     }

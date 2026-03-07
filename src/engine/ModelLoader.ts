@@ -71,14 +71,19 @@ export async function loadModelFile(file: File): Promise<LoadedModel> {
   }
 
   merged.computeVertexNormals();
-  merged.computeBoundingSphere();
+  merged.computeBoundingBox();
 
-  const bs = merged.boundingSphere;
-  if (bs && bs.radius > 5) {
-    const scale = 2 / bs.radius;
-    merged.scale(scale, scale, scale);
-    merged.computeBoundingSphere();
+  const TARGET_HEIGHT = 2;
+  const box = merged.boundingBox!;
+  const height = box.max.y - box.min.y;
+  if (height > 0.001) {
+    const s = TARGET_HEIGHT / height;
+    merged.scale(s, s, s);
+    if (animations.length > 0 && root) {
+      root.scale.multiplyScalar(s);
+    }
   }
+  merged.computeBoundingSphere();
 
   return {
     name,
