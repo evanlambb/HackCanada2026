@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import type { GeometryType } from '../../store/types';
 import { engineRef } from '../../engine/engineRef';
+import { loadModelFile } from '../../engine/ModelLoader';
 
 const primitives: { type: GeometryType; label: string }[] = [
   { type: 'box', label: 'Cube' },
@@ -17,6 +18,7 @@ function AddMenu() {
   const addObject = useEditorStore((s) => s.addObject);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     engineRef.current?.keyboardManager.setAddMenuCallback(() =>
@@ -38,11 +40,35 @@ function AddMenu() {
     setOpen(false);
   }
 
+  function handleImportClick() {
+    setOpen(false);
+    fileRef.current?.click();
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { name, geometry } = await loadModelFile(file);
+      engineRef.current?.sceneManager.importMesh(name, geometry);
+    } catch (err) {
+      console.error('Import failed:', err);
+    }
+    e.target.value = '';
+  }
+
   return (
     <div className="add-menu-wrap" ref={ref}>
       <button className="add-btn" onClick={() => setOpen((o) => !o)} title="Add primitive (Shift+A)">
         +
       </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".fbx,.obj,.glb,.gltf"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
       {open && (
         <div className="add-menu">
           {primitives.map((p) => (
@@ -54,6 +80,10 @@ function AddMenu() {
               {p.label}
             </button>
           ))}
+          <div className="add-menu-divider" />
+          <button className="add-menu-item" onClick={handleImportClick}>
+            Import File...
+          </button>
         </div>
       )}
     </div>

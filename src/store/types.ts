@@ -7,7 +7,8 @@ export type GeometryType =
   | 'cone'
   | 'torus'
   | 'plane'
-  | 'icosahedron';
+  | 'icosahedron'
+  | 'imported';
 
 export type EditorMode = 'object' | 'edit';
 export type EditSubMode = 'vertex' | 'edge' | 'face';

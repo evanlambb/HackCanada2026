@@ -12,6 +12,9 @@ let nextId = 1;
 function generateId(): string {
   return `obj_${nextId++}`;
 }
+function peekId(): string {
+  return `obj_${nextId}`;
+}
 
 const geoNames: Record<GeometryType, string> = {
   box: 'Cube',
@@ -21,6 +24,7 @@ const geoNames: Record<GeometryType, string> = {
   torus: 'Torus',
   plane: 'Plane',
   icosahedron: 'Icosahedron',
+  imported: 'Import',
 };
 
 export interface EditorState {
@@ -35,7 +39,9 @@ export interface EditorState {
   selectedEdges: Set<number>;
   selectedFaces: Set<number>;
 
+  peekNextId: () => string;
   addObject: (type: GeometryType, position?: Vec3) => string;
+  addImportedObject: (name: string) => string;
   removeObject: (id: string) => void;
   updateObject: (id: string, updates: Partial<SceneObject>) => void;
   setSelection: (ids: string[]) => void;
@@ -67,6 +73,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedEdges: new Set(),
   selectedFaces: new Set(),
 
+  peekNextId: () => peekId(),
+
   addObject: (type, position = [0, 0, 0]) => {
     const id = generateId();
     const baseName = geoNames[type] ?? 'Object';
@@ -83,6 +91,35 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       type: 'mesh',
       geometryType: type,
       position,
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+      color: '#808080',
+      children: [],
+      parent: null,
+      visible: true,
+    };
+    set((s) => ({
+      objects: { ...s.objects, [id]: obj },
+      selectedIds: [id],
+    }));
+    return id;
+  },
+
+  addImportedObject: (importName) => {
+    const id = generateId();
+    const existing = Object.values(get().objects).map((o) => o.name);
+    let name = importName;
+    let c = 1;
+    while (existing.includes(name)) {
+      name = `${importName}.${String(c).padStart(3, '0')}`;
+      c++;
+    }
+    const obj: SceneObject = {
+      id,
+      name,
+      type: 'mesh',
+      geometryType: 'imported',
+      position: [0, 0, 0],
       rotation: [0, 0, 0],
       scale: [1, 1, 1],
       color: '#808080',
