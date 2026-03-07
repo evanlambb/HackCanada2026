@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Character Viewer</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        touch-action: none;
+      }
+
+      /* shared frosted-glass surface */
+      .glass {
+        background: rgba(20, 20, 30, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        backdrop-filter: blur(8px);
+        color: #e8e8f0;
+        font-family: system-ui, sans-serif;
+        font-size: 13px;
+      }
+
+      /* ── toolbar (top-left) ── */
+      #toolbar {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 10;
+      }
+
+      #fileLabel {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: background 0.15s;
+        user-select: none;
+      }
+
+      #fileLabel:hover {
+        background: rgba(40, 40, 60, 0.9);
+      }
+
+      #fileLabel svg {
+        flex-shrink: 0;
+        opacity: 0.8;
+      }
+
+      #fileInput {
+        display: none;
+      }
+
+      /* ── animation panel (bottom-right) ── */
+      #animPanel {
+        position: fixed;
+        bottom: 12px;
+        right: 12px;
+        z-index: 10;
+        min-width: 180px;
+        max-width: 260px;
+        max-height: 60vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      #animPanel[hidden] {
+        display: none;
+      }
+
+      #animPanelHeader {
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0.55;
+        flex-shrink: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      #animList {
+        overflow-y: auto;
+        padding: 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      #animList::-webkit-scrollbar {
+        width: 4px;
+      }
+      #animList::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #animList::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 2px;
+      }
+
+      .anim-btn {
+        width: 100%;
+        text-align: left;
+        padding: 5px 8px;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        color: #e8e8f0;
+        font-family: system-ui, sans-serif;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.12s, border-color 0.12s;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .anim-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .anim-btn.active {
+        background: rgba(100, 120, 255, 0.25);
+        border-color: rgba(120, 140, 255, 0.4);
+        color: #c8d0ff;
+      }
+
+      .anim-empty {
+        padding: 8px;
+        opacity: 0.45;
+        font-size: 12px;
+        font-style: italic;
+      }
+
+      /* ── generate animation panel (top-right) ── */
+      #genPanel {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 10;
+        width: 260px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      #genPanelHeader {
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0.55;
+        flex-shrink: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      #genPanelBody {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      #genPromptInput {
+        width: 100%;
+        padding: 6px 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 4px;
+        color: #e8e8f0;
+        font-family: system-ui, sans-serif;
+        font-size: 12px;
+        outline: none;
+        transition: border-color 0.15s, background 0.15s;
+      }
+
+      #genPromptInput::placeholder {
+        color: rgba(232, 232, 240, 0.35);
+      }
+
+      #genPromptInput:focus {
+        border-color: rgba(120, 140, 255, 0.5);
+        background: rgba(255, 255, 255, 0.09);
+      }
+
+      #genBtn {
+        padding: 6px 10px;
+        background: rgba(100, 120, 255, 0.3);
+        border: 1px solid rgba(120, 140, 255, 0.4);
+        border-radius: 4px;
+        color: #c8d0ff;
+        font-family: system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+        text-align: center;
+      }
+
+      #genBtn:hover:not(:disabled) {
+        background: rgba(100, 120, 255, 0.45);
+        border-color: rgba(140, 160, 255, 0.6);
+      }
+
+      #genBtn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      #genStatus {
+        font-size: 11px;
+        color: rgba(232, 232, 240, 0.65);
+        min-height: 14px;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+
+      #genStatus.error {
+        color: rgba(255, 120, 100, 0.85);
+      }
+
+      #genStatus.success {
+        color: rgba(100, 220, 150, 0.85);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="renderCanvas"></canvas>
+
+    <div id="toolbar">
+      <label id="fileLabel" class="glass" for="fileInput">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Open GLB / GLTF
+      </label>
+      <input id="fileInput" type="file" accept=".glb,.gltf" />
+    </div>
+
+    <!-- Generate Animation Panel (top-right) -->
+    <div id="genPanel" class="glass">
+      <div id="genPanelHeader">Generate Animation</div>
+      <div id="genPanelBody">
+        <!--
+          Single prompt:  "walking"
+          Batch prompts:  "idle, walk, run, jump"
+          Comma-separated prompts are processed sequentially.
+        -->
+        <input
+          id="genPromptInput"
+          type="text"
+          placeholder="idle, walk, run, jump"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="genBtn">Generate Animation</button>
+        <div id="genStatus"></div>
+      </div>
+    </div>
+
+    <div id="animPanel" class="glass" hidden>
+      <div id="animPanelHeader">Animations</div>
+      <div id="animList"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
