@@ -39,12 +39,9 @@ export interface EditorState {
   selectedEdges: Set<number>;
   selectedFaces: Set<number>;
 
-  enhanceModalOpen: boolean;
   enhanceScreenshot: string | null;
   enhanceResult: string | null;
   enhanceLoading: boolean;
-  openEnhanceModal: () => void;
-  closeEnhanceModal: () => void;
   setEnhanceScreenshot: (s: string | null) => void;
   setEnhanceResult: (s: string | null) => void;
   setEnhanceLoading: (loading: boolean) => void;
@@ -83,18 +80,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedEdges: new Set(),
   selectedFaces: new Set(),
 
-  enhanceModalOpen: false,
   enhanceScreenshot: null,
   enhanceResult: null,
   enhanceLoading: false,
-  openEnhanceModal: () =>
-    set({ enhanceModalOpen: true }),
-  closeEnhanceModal: () =>
-    set({
-      enhanceModalOpen: false,
-      enhanceScreenshot: null,
-      enhanceResult: null,
-    }),
   setEnhanceScreenshot: (s) => set({ enhanceScreenshot: s }),
   setEnhanceResult: (s) => set({ enhanceResult: s }),
   setEnhanceLoading: (loading) => set({ enhanceLoading: loading }),
