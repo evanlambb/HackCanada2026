@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createImageTo3D, pollTask, type MeshyTask, type ModelType } from '../../engine/MeshyAPI';
 import { engineRef } from '../../engine/engineRef';
+import { useEditorStore } from '../../store/editorStore';
 
 type ViewSlot = 'front' | 'back' | 'left' | 'right' | 'top';
 const VIEW_LABELS: { key: ViewSlot; label: string }[] = [
@@ -147,8 +148,21 @@ export default function MeshGenPanel() {
         (resolve, reject) => loader.parse(buffer, '', resolve, reject),
       );
 
+      const scene = gltf.scene;
+      const clips = gltf.animations ?? [];
+
+      // Auto-scale if too large
+      const box = new THREE.Box3().setFromObject(scene);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      if (maxDim > 5) {
+        const s = 2 / maxDim;
+        scene.scale.multiplyScalar(s);
+      }
+
+      // Gather a merged geometry for fallback/edit mode (doesn't affect visual)
       const geos: THREE.BufferGeometry[] = [];
-      gltf.scene.traverse((child) => {
+      scene.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
           const mesh = child as THREE.Mesh;
           const geo = mesh.geometry.clone();
@@ -157,26 +171,23 @@ export default function MeshGenPanel() {
           geos.push(geo);
         }
       });
-
-      if (geos.length === 0) return;
-
-      let merged: THREE.BufferGeometry;
-      if (geos.length === 1) {
-        merged = geos[0];
+      let mergedGeo: THREE.BufferGeometry;
+      if (geos.length <= 1) {
+        mergedGeo = geos[0] ?? new THREE.BufferGeometry();
       } else {
         const normalized = geos.map((g) => (g.index ? g.toNonIndexed() : g));
-        merged = mergeGeometries(normalized, false) ?? normalized[0];
-        merged.computeVertexNormals();
+        mergedGeo = mergeGeometries(normalized, false) ?? normalized[0];
       }
 
-      merged.computeBoundingSphere();
-      const bs = merged.boundingSphere;
-      if (bs && bs.radius > 5) {
-        const s = 2 / bs.radius;
-        merged.scale(s, s, s);
+      const importedId = engineRef.current?.sceneManager.importModel(
+        'MeshyGen',
+        mergedGeo,
+        scene,
+        clips,
+      );
+      if (importedId && resultTask.id) {
+        useEditorStore.getState().setMeshyTaskId(importedId, resultTask.id);
       }
-
-      engineRef.current?.sceneManager.importMesh('MeshyGen', merged);
     } catch (err) {
       console.error('Failed to add to scene:', err);
     }

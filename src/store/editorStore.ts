@@ -54,6 +54,9 @@ export interface EditorState {
   addObject: (type: GeometryType, position?: Vec3) => string;
   addImportedObject: (name: string, animations?: AnimationData[]) => string;
   setActiveAnimation: (objectId: string, animationName: string | null) => void;
+  setRigTaskId: (objectId: string, taskId: string) => void;
+  setMeshyTaskId: (objectId: string, taskId: string) => void;
+  addAnimationsToObject: (objectId: string, anims: AnimationData[]) => void;
   removeObject: (id: string) => void;
   updateObject: (id: string, updates: Partial<SceneObject>) => void;
   setSelection: (ids: string[]) => void;
@@ -171,6 +174,43 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         objects: {
           ...s.objects,
           [objectId]: { ...s.objects[objectId], activeAnimation: animationName },
+        },
+      };
+    }),
+
+  setRigTaskId: (objectId, taskId) =>
+    set((s) => {
+      if (!s.objects[objectId]) return s;
+      return {
+        objects: {
+          ...s.objects,
+          [objectId]: { ...s.objects[objectId], rigTaskId: taskId },
+        },
+      };
+    }),
+
+  setMeshyTaskId: (objectId, taskId) =>
+    set((s) => {
+      if (!s.objects[objectId]) return s;
+      return {
+        objects: {
+          ...s.objects,
+          [objectId]: { ...s.objects[objectId], meshyTaskId: taskId },
+        },
+      };
+    }),
+
+  addAnimationsToObject: (objectId, anims) =>
+    set((s) => {
+      if (!s.objects[objectId]) return s;
+      const existing = s.objects[objectId].animations ?? [];
+      return {
+        objects: {
+          ...s.objects,
+          [objectId]: {
+            ...s.objects[objectId],
+            animations: [...existing, ...anims],
+          },
         },
       };
     }),
