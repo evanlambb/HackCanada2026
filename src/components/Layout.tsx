@@ -6,6 +6,7 @@ import HierarchyPanel from './panels/HierarchyPanel';
 import InspectorPanel from './panels/InspectorPanel';
 import AnimationsPanel from './panels/AnimationsPanel';
 import MeshGenPanel from './panels/MeshGenPanel';
+import EnhancePanel from './panels/EnhancePanel';
 
 const layoutJson: IJsonModel = {
   global: {
@@ -65,6 +66,7 @@ const layoutJson: IJsonModel = {
         weight: 24,
         children: [
           { type: 'tab', name: 'Inspector', component: 'inspector' },
+          { type: 'tab', name: 'Enhance', component: 'enhance' },
         ],
       },
     ],
@@ -86,6 +88,8 @@ export default function EditorLayout() {
         return <AnimationsPanel />;
       case 'meshGen':
         return <MeshGenPanel />;
+      case 'enhance':
+        return <EnhancePanel />;
       default:
         return null;
     }

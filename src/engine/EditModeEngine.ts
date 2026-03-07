@@ -647,6 +647,13 @@ export class EditModeEngine {
     }
   }
 
+  setOverlaysVisible(visible: boolean) {
+    if (this.vertexPoints) this.vertexPoints.visible = visible;
+    if (this.edgeLines) this.edgeLines.visible = visible;
+    if (this.faceHighlight) this.faceHighlight.visible = visible;
+    if (this.axisLine) this.axisLine.visible = visible;
+  }
+
   dispose() {
     this.unsub();
     this.clearOverlays();

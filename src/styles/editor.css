@@ -722,6 +722,134 @@ html, body, #root {
   letter-spacing: 0.5px;
 }
 
+/* ===== ENHANCE PANEL ===== */
+.enhance-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.enhance-panel-section {
+  border-bottom: 2px solid var(--border-thick);
+  padding: 12px;
+}
+
+.enhance-panel-section:last-child {
+  border-bottom: none;
+}
+
+.enhance-panel-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.enhance-preview-wrap {
+  margin-top: 8px;
+}
+
+.enhance-preview-wrap img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  background: var(--bg-input);
+  border: 2px solid var(--border-thin);
+}
+
+.enhance-preview-placeholder {
+  width: 100%;
+  min-height: 120px;
+  background: var(--bg-input);
+  border: 2px dashed var(--border-thick);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.enhance-error {
+  color: var(--red);
+  font-size: 11px;
+  margin-top: 8px;
+  word-break: break-word;
+}
+
+.enhance-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.enhance-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.enhance-form textarea {
+  background: var(--bg-input);
+  border: 2px solid var(--border-thin);
+  color: var(--text);
+  padding: 8px 10px;
+  font-family: var(--sans);
+  font-size: 12px;
+  resize: vertical;
+  min-height: 56px;
+  outline: none;
+}
+
+.enhance-form textarea:focus {
+  border-color: var(--accent);
+}
+
+.enhance-form textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.enhance-btn {
+  padding: 8px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 2px solid var(--border-thick);
+  background: var(--bg-surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.enhance-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--text-dim);
+}
+
+.enhance-btn-primary {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.enhance-btn-primary:hover:not(:disabled) {
+  background: rgba(224, 255, 0, 0.2);
+}
+
+.enhance-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ===== ANIMATIONS PANEL ===== */
 .animation-panel {
   height: 100%;
