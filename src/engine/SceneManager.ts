@@ -7,6 +7,7 @@ import type { SceneObject } from '../store/types';
 export class SceneManager {
   viewport: Viewport;
   meshMap = new Map<string, THREE.Mesh>();
+  private geometryCache = new Map<string, THREE.BufferGeometry>();
   private unsub: () => void;
 
   constructor(viewport: Viewport) {
@@ -35,8 +36,18 @@ export class SceneManager {
     }
   }
 
+  importMesh(name: string, geometry: THREE.BufferGeometry): string {
+    const store = useEditorStore.getState();
+    const id = store.peekNextId();
+    this.geometryCache.set(id, geometry);
+    store.addImportedObject(name);
+    return id;
+  }
+
   private addMesh(obj: SceneObject) {
-    const geo = createGeometry(obj.geometryType);
+    const cached = this.geometryCache.get(obj.id);
+    const geo = cached ?? createGeometry(obj.geometryType);
+    if (cached) this.geometryCache.delete(obj.id);
     const mat = new THREE.MeshStandardMaterial({
       color: obj.color,
       roughness: 0.7,

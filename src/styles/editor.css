@@ -378,6 +378,12 @@ html, body, #root {
   font-weight: 700;
 }
 
+.add-menu-divider {
+  height: 2px;
+  background: var(--border-thick);
+  margin: 4px 0;
+}
+
 /* ===== INSPECTOR PANEL ===== */
 .inspector-panel {
   height: 100%;

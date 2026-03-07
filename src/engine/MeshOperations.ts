@@ -18,6 +18,8 @@ export function createGeometry(type: GeometryType): THREE.BufferGeometry {
       return new THREE.PlaneGeometry(1, 1);
     case 'icosahedron':
       return new THREE.IcosahedronGeometry(0.5, 0);
+    case 'imported':
+      return new THREE.BoxGeometry(1, 1, 1);
     default:
       return new THREE.BoxGeometry(1, 1, 1);
   }
