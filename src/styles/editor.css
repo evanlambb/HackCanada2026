@@ -850,6 +850,79 @@ html, body, #root {
   cursor: not-allowed;
 }
 
+/* Enhance refine */
+.enhance-refine {
+  margin-top: 8px;
+  border: 2px solid var(--border-thick);
+  padding: 8px;
+  background: var(--bg-panel);
+}
+
+.enhance-refine-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.enhance-refine-close {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-thick);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+}
+
+.enhance-refine-close:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: #000;
+}
+
+.enhance-refine-preview {
+  margin-bottom: 6px;
+}
+
+.enhance-refine-preview img {
+  width: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  border: 2px solid var(--border-thick);
+  display: block;
+}
+
+.enhance-refine-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 2px solid var(--border-thin);
+  color: var(--text);
+  padding: 6px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  resize: none;
+  outline: none;
+  margin-bottom: 6px;
+}
+
+.enhance-refine-input:focus {
+  border-color: var(--accent);
+}
+
+.enhance-refine-input::placeholder {
+  color: var(--text-muted);
+}
+
+.enhance-library-thumb.selected {
+  border-color: var(--text-dim);
+}
+
 .enhance-library-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
