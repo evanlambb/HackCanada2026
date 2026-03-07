@@ -8,6 +8,7 @@ import { KeyboardManager } from '../../engine/KeyboardManager';
 import { engineRef } from '../../engine/engineRef';
 import { useEditorStore } from '../../store/editorStore';
 import type { ActiveTool } from '../../store/types';
+import EnhanceModal from '../EnhanceModal';
 
 const tools: { tool: ActiveTool; label: string; key: string }[] = [
   { tool: 'select', label: 'Sel', key: '' },
@@ -25,6 +26,9 @@ function SceneHUD() {
   const setEditSubMode = useEditorStore((s) => s.setEditSubMode);
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const selectedIds = useEditorStore((s) => s.selectedIds);
+  const objectCount = useEditorStore((s) => Object.keys(s.objects).length);
+  const openEnhanceModal = useEditorStore((s) => s.openEnhanceModal);
+  const setEnhanceScreenshot = useEditorStore((s) => s.setEnhanceScreenshot);
 
   function toggleMode() {
     if (mode === 'object') {
@@ -99,6 +103,29 @@ function SceneHUD() {
               </button>
             </>
           )}
+          <div className="hud-sep" />
+          <button
+            className="hud-btn"
+            disabled={objectCount === 0}
+            title="Enhance character with AI"
+            onClick={() => {
+              const eng = engineRef.current;
+              if (!eng) return;
+              const onBefore = () => {
+                eng.transformEngine.controls.getHelper().visible = false;
+                eng.editModeEngine.setOverlaysVisible(false);
+              };
+              const onAfter = () => {
+                eng.transformEngine.controls.getHelper().visible = true;
+                eng.editModeEngine.setOverlaysVisible(true);
+              };
+              const dataUrl = eng.viewport.captureScreenshot(onBefore, onAfter);
+              setEnhanceScreenshot(dataUrl);
+              openEnhanceModal();
+            }}
+          >
+            Enhance
+          </button>
         </div>
       </div>
     </div>
@@ -173,6 +200,7 @@ export default function SceneViewPanel() {
       <div ref={canvasRef} className="scene-canvas" />
       <SceneHUD />
       <SceneStatus />
+      <EnhanceModal />
     </div>
   );
 }

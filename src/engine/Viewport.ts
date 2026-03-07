@@ -8,6 +8,8 @@ export class Viewport {
   controls: OrbitControls;
   container: HTMLDivElement;
 
+  private gridHelper: THREE.GridHelper;
+  private axesHelper: THREE.AxesHelper;
   private animationId = 0;
   private renderCallbacks: Array<() => void> = [];
   private lastW = 0;
@@ -48,11 +50,11 @@ export class Viewport {
     container.addEventListener('pointerdown', this.onAltPointerDown, true);
     container.addEventListener('pointerup', this.onAltPointerUp, true);
 
-    const grid = new THREE.GridHelper(20, 20, 0x2a2a2a, 0x1a1a1a);
-    this.scene.add(grid);
+    this.gridHelper = new THREE.GridHelper(20, 20, 0x2a2a2a, 0x1a1a1a);
+    this.scene.add(this.gridHelper);
 
-    const axes = new THREE.AxesHelper(2);
-    this.scene.add(axes);
+    this.axesHelper = new THREE.AxesHelper(2);
+    this.scene.add(this.axesHelper);
 
     const ambient = new THREE.AmbientLight(0x404040, 2);
     this.scene.add(ambient);
@@ -68,6 +70,28 @@ export class Viewport {
 
   onRender(cb: () => void) {
     this.renderCallbacks.push(cb);
+  }
+
+  /**
+   * Captures a clean screenshot of the current view (no grid/axes).
+   * Call onBefore to hide transform gizmo and edit overlays; onAfter to restore.
+   */
+  captureScreenshot(
+    onBefore?: () => void,
+    onAfter?: () => void,
+  ): string {
+    onBefore?.();
+    this.gridHelper.visible = false;
+    this.axesHelper.visible = false;
+    const prevBackground = this.scene.background;
+    this.scene.background = new THREE.Color(0xd0d0d0);
+    this.renderer.render(this.scene, this.camera);
+    const dataUrl = this.renderer.domElement.toDataURL('image/png');
+    this.scene.background = prevBackground;
+    this.gridHelper.visible = true;
+    this.axesHelper.visible = true;
+    onAfter?.();
+    return dataUrl;
   }
 
   focusOn(position: THREE.Vector3, boundingRadius = 1) {
