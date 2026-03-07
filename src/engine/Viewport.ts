@@ -23,7 +23,7 @@ export class Viewport {
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setClearColor(0x1a1a2e);
+    this.renderer.setClearColor(0x111111);
     this.renderer.setSize(initW, initH, false);
     this.renderer.domElement.style.width = '100%';
     this.renderer.domElement.style.height = '100%';
@@ -48,7 +48,7 @@ export class Viewport {
     container.addEventListener('pointerdown', this.onAltPointerDown, true);
     container.addEventListener('pointerup', this.onAltPointerUp, true);
 
-    const grid = new THREE.GridHelper(20, 20, 0x444444, 0x333333);
+    const grid = new THREE.GridHelper(20, 20, 0x2a2a2a, 0x1a1a1a);
     this.scene.add(grid);
 
     const axes = new THREE.AxesHelper(2);

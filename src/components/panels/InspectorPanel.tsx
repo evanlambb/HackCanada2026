@@ -19,8 +19,16 @@ function Vec3Row({
     onChange(v);
   }
   return (
-    <div style={{ marginBottom: 6 }}>
-      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 2 }}>
+    <div style={{ marginBottom: 8 }}>
+      <div style={{
+        fontFamily: 'var(--mono)',
+        fontSize: 10,
+        fontWeight: 600,
+        color: 'var(--text-dim)',
+        marginBottom: 4,
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+      }}>
         {label}
       </div>
       <div className="inspector-row">
@@ -59,13 +67,17 @@ export default function InspectorPanel() {
   const updateObject = useEditorStore((s) => s.updateObject);
 
   if (selectedIds.length === 0) {
-    return <div className="inspector-panel"><div className="inspector-empty">No object selected</div></div>;
+    return (
+      <div className="inspector-panel">
+        <div className="inspector-empty">No selection</div>
+      </div>
+    );
   }
 
   if (selectedIds.length > 1) {
     return (
       <div className="inspector-panel">
-        <div className="inspector-empty">{selectedIds.length} objects selected</div>
+        <div className="inspector-empty">{selectedIds.length} objects</div>
       </div>
     );
   }
@@ -123,9 +135,8 @@ export default function InspectorPanel() {
 
       <div className="inspector-section">
         <div className="inspector-section-title">Geometry</div>
-        <div className="inspector-info">Type: {obj.geometryType}</div>
-        <div className="inspector-info">Vertices: {vertexCount}</div>
-        <div className="inspector-info">Faces: {Math.floor(faceCount)}</div>
+        <div className="inspector-info">{obj.geometryType}</div>
+        <div className="inspector-info">{vertexCount} verts &middot; {Math.floor(faceCount)} faces</div>
       </div>
     </div>
   );
