@@ -141,7 +141,7 @@ export class KeyboardManager {
     const meshes: THREE.Mesh[] = [];
     for (const id of store.selectedIds) {
       const m = this.sceneManager.getMeshById(id);
-      if (m) meshes.push(m);
+      if (m && (m as THREE.Mesh).isMesh) meshes.push(m as THREE.Mesh);
     }
     const merged = joinMeshGeometries(meshes);
     if (!merged) return;
@@ -150,7 +150,8 @@ export class KeyboardManager {
     for (let i = 1; i < store.selectedIds.length; i++) {
       store.removeObject(store.selectedIds[i]);
     }
-    const mesh = this.sceneManager.getMeshById(targetId);
+    const rawMesh = this.sceneManager.getMeshById(targetId);
+    const mesh = rawMesh && (rawMesh as THREE.Mesh).isMesh ? (rawMesh as THREE.Mesh) : null;
     if (mesh) {
       mesh.geometry.dispose();
       mesh.geometry = merged;
@@ -171,13 +172,14 @@ export class KeyboardManager {
     const store = useEditorStore.getState();
     const id = store.selectedIds[0];
     if (!id) return;
-    const mesh = this.sceneManager.getMeshById(id);
-    if (!mesh) return;
-    mesh.geometry.computeBoundingSphere();
-    const bs = mesh.geometry.boundingSphere;
+    const rawObj = this.sceneManager.getMeshById(id);
+    if (!rawObj) return;
+    const mesh = (rawObj as THREE.Mesh).isMesh ? (rawObj as THREE.Mesh) : null;
+    if (mesh) mesh.geometry.computeBoundingSphere();
+    const bs = mesh?.geometry.boundingSphere ?? null;
     const worldPos = new THREE.Vector3();
-    mesh.getWorldPosition(worldPos);
-    this.viewport.focusOn(worldPos, bs ? bs.radius * Math.max(...mesh.scale.toArray()) : 1);
+    rawObj.getWorldPosition(worldPos);
+    this.viewport.focusOn(worldPos, bs ? bs.radius * Math.max(...rawObj.scale.toArray()) : 1);
   }
 
   dispose() {

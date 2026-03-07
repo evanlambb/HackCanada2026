@@ -59,9 +59,9 @@ export class TransformEngine {
       return;
     }
     if (s.selectedIds.length === 1) {
-      const mesh = this.sceneManager.getMeshById(s.selectedIds[0]);
-      if (mesh) {
-        this.controls.attach(mesh);
+      const obj = this.sceneManager.getMeshById(s.selectedIds[0]);
+      if (obj) {
+        this.controls.attach(obj as THREE.Object3D);
         this.applyToolMode(s.activeTool);
         return;
       }

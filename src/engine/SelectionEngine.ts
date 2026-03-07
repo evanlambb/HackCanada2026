@@ -46,7 +46,8 @@ export class SelectionEngine {
     );
 
     if (hits.length > 0) {
-      const id = (hits[0].object as THREE.Mesh).userData.id;
+      const id = hits[0].object.userData.id as string | undefined;
+      if (!id) return;
       if (e.shiftKey) {
         if (store.selectedIds.includes(id)) store.removeFromSelection(id);
         else store.addToSelection(id);

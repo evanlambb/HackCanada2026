@@ -14,6 +14,8 @@ export class Viewport {
   private renderCallbacks: Array<() => void> = [];
   private lastW = 0;
   private lastH = 0;
+  private clock = new THREE.Clock();
+  private _lastDelta = 0;
 
   constructor(container: HTMLDivElement) {
     this.container = container;
@@ -66,6 +68,10 @@ export class Viewport {
     this.scene.add(dir2);
 
     this.animate();
+  }
+
+  getDelta() {
+    return this._lastDelta;
   }
 
   onRender(cb: () => void) {
@@ -172,6 +178,7 @@ export class Viewport {
 
   private animate = () => {
     this.animationId = requestAnimationFrame(this.animate);
+    this._lastDelta = this.clock.getDelta();
 
     // Safety-net: detect size mismatch each frame (fixes FlexLayout late layout)
     const cw = Math.max(1, this.container.clientWidth);

@@ -850,6 +850,112 @@ html, body, #root {
   cursor: not-allowed;
 }
 
+/* ===== ANIMATIONS PANEL ===== */
+.animation-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.animation-empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: center;
+  padding: 24px 14px;
+  letter-spacing: 0.5px;
+}
+
+.animation-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--border-thick);
+  flex-shrink: 0;
+}
+
+.animation-panel-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+}
+
+.animation-panel-object {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+  text-align: right;
+}
+
+.animation-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+  padding: 8px 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.animation-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 5px 10px;
+  border: 2px solid var(--border-thick);
+  background: var(--bg-surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  min-width: 80px;
+  max-width: 140px;
+  transition: none;
+}
+
+.animation-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.animation-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.animation-btn-name {
+  font-size: 10px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.animation-btn-duration {
+  font-size: 9px;
+  opacity: 0.6;
+  margin-top: 1px;
+}
+
+.animation-btn.active .animation-btn-duration {
+  opacity: 0.5;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

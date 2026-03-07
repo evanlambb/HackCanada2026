@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { useEditorStore } from '../../store/editorStore';
 import type { Vec3 } from '../../store/types';
 import { engineRef } from '../../engine/engineRef';
@@ -85,7 +86,8 @@ export default function InspectorPanel() {
   const obj = objects[selectedIds[0]];
   if (!obj) return null;
 
-  const mesh = engineRef.current?.sceneManager.getMeshById(obj.id);
+  const rawObj = engineRef.current?.sceneManager.getMeshById(obj.id);
+  const mesh = rawObj && (rawObj as THREE.Mesh).isMesh ? (rawObj as THREE.Mesh) : null;
   const vertexCount = mesh?.geometry.attributes.position?.count ?? 0;
   const faceCount = mesh?.geometry.index
     ? mesh.geometry.index.count / 3
