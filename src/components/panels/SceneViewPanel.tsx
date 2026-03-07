@@ -23,6 +23,7 @@ export default function SceneViewPanel() {
       transformEngine,
       editModeEngine,
       sceneManager,
+      viewport,
     );
 
     engineRef.current = {

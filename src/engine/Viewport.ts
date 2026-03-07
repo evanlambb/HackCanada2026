@@ -11,24 +11,26 @@ export class Viewport {
   private animationId = 0;
   private resizeObserver: ResizeObserver;
   private renderCallbacks: Array<() => void> = [];
+  private lastW = 0;
+  private lastH = 0;
 
   constructor(container: HTMLDivElement) {
     this.container = container;
 
+    const initW = Math.max(1, container.clientWidth);
+    const initH = Math.max(1, container.clientHeight);
+    this.lastW = initW;
+    this.lastH = initH;
+
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setClearColor(0x1a1a2e);
-    this.renderer.setSize(container.clientWidth, container.clientHeight);
+    this.renderer.setSize(initW, initH);
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
 
-    this.camera = new THREE.PerspectiveCamera(
-      50,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      1000,
-    );
+    this.camera = new THREE.PerspectiveCamera(50, initW / initH, 0.1, 1000);
     this.camera.position.set(5, 4, 5);
     this.camera.lookAt(0, 0, 0);
 
@@ -40,6 +42,10 @@ export class Viewport {
       MIDDLE: THREE.MOUSE.ROTATE,
       RIGHT: THREE.MOUSE.PAN,
     };
+
+    // Alt+left-click orbit: capture-phase listener fires before OrbitControls
+    container.addEventListener('pointerdown', this.onAltPointerDown, true);
+    container.addEventListener('pointerup', this.onAltPointerUp, true);
 
     const grid = new THREE.GridHelper(20, 20, 0x444444, 0x333333);
     this.scene.add(grid);
@@ -66,10 +72,36 @@ export class Viewport {
     this.renderCallbacks.push(cb);
   }
 
+  focusOn(position: THREE.Vector3, boundingRadius = 1) {
+    this.controls.target.copy(position);
+    const dir = this.camera.position.clone().sub(position).normalize();
+    const dist = Math.max(boundingRadius * 3, 2);
+    this.camera.position.copy(position).addScaledVector(dir, dist);
+    this.controls.update();
+  }
+
+  /* Alt+drag orbit helpers */
+
+  private onAltPointerDown = (e: PointerEvent) => {
+    if (e.button === 0 && e.altKey) {
+      this.controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+    }
+  };
+
+  private onAltPointerUp = (e: PointerEvent) => {
+    if (e.button === 0) {
+      this.controls.mouseButtons.LEFT = -1 as unknown as THREE.MOUSE;
+    }
+  };
+
+  /* Resize handling */
+
   private onResize() {
-    const w = this.container.clientWidth;
-    const h = this.container.clientHeight;
-    if (w === 0 || h === 0) return;
+    const w = Math.max(1, this.container.clientWidth);
+    const h = Math.max(1, this.container.clientHeight);
+    if (w === this.lastW && h === this.lastH) return;
+    this.lastW = w;
+    this.lastH = h;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
@@ -77,6 +109,14 @@ export class Viewport {
 
   private animate = () => {
     this.animationId = requestAnimationFrame(this.animate);
+
+    // Safety-net: detect size mismatch each frame (fixes FlexLayout late layout)
+    const cw = Math.max(1, this.container.clientWidth);
+    const ch = Math.max(1, this.container.clientHeight);
+    if (cw !== this.lastW || ch !== this.lastH) {
+      this.onResize();
+    }
+
     this.controls.update();
     for (const cb of this.renderCallbacks) cb();
     this.renderer.render(this.scene, this.camera);
@@ -85,6 +125,8 @@ export class Viewport {
   dispose() {
     cancelAnimationFrame(this.animationId);
     this.resizeObserver.disconnect();
+    this.container.removeEventListener('pointerdown', this.onAltPointerDown, true);
+    this.container.removeEventListener('pointerup', this.onAltPointerUp, true);
     this.controls.dispose();
     this.renderer.dispose();
     if (this.container.contains(this.renderer.domElement)) {

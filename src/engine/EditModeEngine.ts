@@ -26,6 +26,7 @@ export class EditModeEngine {
   private grabVertexSet = new Set<number>();
   private grabPlane = new THREE.Plane();
   private grabStartWorld = new THREE.Vector3();
+  private grabAxisConstraint: 'X' | 'Y' | 'Z' | null = null;
 
   private unsub: () => void;
 
@@ -292,6 +293,7 @@ export class EditModeEngine {
       this.grabbing = false;
       this.grabOrigins = null;
       this.grabVertexSet.clear();
+      this.grabAxisConstraint = null;
       this.viewport.renderer.domElement.style.cursor = '';
       return;
     }
@@ -328,6 +330,10 @@ export class EditModeEngine {
     const inv = mesh.matrixWorld.clone().invert();
     const localDelta = delta.clone().transformDirection(inv);
 
+    if (this.grabAxisConstraint === 'X') { localDelta.y = 0; localDelta.z = 0; }
+    if (this.grabAxisConstraint === 'Y') { localDelta.x = 0; localDelta.z = 0; }
+    if (this.grabAxisConstraint === 'Z') { localDelta.x = 0; localDelta.y = 0; }
+
     const pos = this.editGeometry.attributes.position;
     let oi = 0;
     for (const vi of this.grabVertexSet) {
@@ -349,6 +355,7 @@ export class EditModeEngine {
     const mesh = this.getEditMesh();
     if (!mesh) return;
 
+    this.grabAxisConstraint = null;
     const pos = this.editGeometry.attributes.position;
     const verts = new Set<number>();
 
@@ -414,7 +421,12 @@ export class EditModeEngine {
     this.grabbing = false;
     this.grabOrigins = null;
     this.grabVertexSet.clear();
+    this.grabAxisConstraint = null;
     this.viewport.renderer.domElement.style.cursor = '';
+  }
+
+  setGrabAxisConstraint(axis: 'X' | 'Y' | 'Z' | null) {
+    this.grabAxisConstraint = axis;
   }
 
   /* ---- picking ---- */

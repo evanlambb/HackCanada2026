@@ -3,22 +3,26 @@ import { useEditorStore } from '../store/editorStore';
 import type { TransformEngine } from './TransformEngine';
 import type { EditModeEngine } from './EditModeEngine';
 import type { SceneManager } from './SceneManager';
+import type { Viewport } from './Viewport';
 import { joinMeshGeometries } from './MeshOperations';
 
 export class KeyboardManager {
   private transformEngine: TransformEngine;
   private editModeEngine: EditModeEngine;
   private sceneManager: SceneManager;
+  private viewport: Viewport;
   private showAddMenuCb: (() => void) | null = null;
 
   constructor(
     transformEngine: TransformEngine,
     editModeEngine: EditModeEngine,
     sceneManager: SceneManager,
+    viewport: Viewport,
   ) {
     this.transformEngine = transformEngine;
     this.editModeEngine = editModeEngine;
     this.sceneManager = sceneManager;
+    this.viewport = viewport;
     window.addEventListener('keydown', this.onKey);
   }
 
@@ -63,16 +67,25 @@ export class KeyboardManager {
         if (store.mode === 'edit') store.setEditSubMode('face');
         break;
 
+      case 'f':
+        this.focusSelected();
+        break;
+
       case 'x':
-        if (!e.ctrlKey && !e.metaKey)
+        if (!e.ctrlKey && !e.metaKey) {
           this.transformEngine.setAxisConstraint('X');
+          if (store.mode === 'edit') this.editModeEngine.setGrabAxisConstraint('X');
+        }
         break;
       case 'y':
         this.transformEngine.setAxisConstraint('Y');
+        if (store.mode === 'edit') this.editModeEngine.setGrabAxisConstraint('Y');
         break;
       case 'z':
-        if (!e.ctrlKey && !e.metaKey)
+        if (!e.ctrlKey && !e.metaKey) {
           this.transformEngine.setAxisConstraint('Z');
+          if (store.mode === 'edit') this.editModeEngine.setGrabAxisConstraint('Z');
+        }
         break;
 
       case 'delete':
@@ -152,6 +165,19 @@ export class KeyboardManager {
       });
     }
     store.setSelection([targetId]);
+  }
+
+  private focusSelected() {
+    const store = useEditorStore.getState();
+    const id = store.selectedIds[0];
+    if (!id) return;
+    const mesh = this.sceneManager.getMeshById(id);
+    if (!mesh) return;
+    mesh.geometry.computeBoundingSphere();
+    const bs = mesh.geometry.boundingSphere;
+    const worldPos = new THREE.Vector3();
+    mesh.getWorldPosition(worldPos);
+    this.viewport.focusOn(worldPos, bs ? bs.radius * Math.max(...mesh.scale.toArray()) : 1);
   }
 
   dispose() {

@@ -29,7 +29,7 @@ export default function StatusBar() {
         </span>
       )}
       <span style={{ marginLeft: 'auto', opacity: 0.6 }}>
-        Middle-click: orbit &middot; Right-click: pan &middot; Scroll: zoom
+        Alt+drag / Middle-click: orbit &middot; Right-click: pan &middot; Scroll: zoom &middot; F: focus
       </span>
     </div>
   );
