@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import { engineRef } from '../../engine/engineRef';
 
-const API_BASE = import.meta.env.VITE_ENHANCE_API ?? 'http://localhost:3001';
+const GEMINI_BASE = '/api/gemini';
+const MODEL = 'gemini-3.1-flash-image-preview';
 
 function buildPrompt(fields: {
   persona: string;
@@ -16,6 +17,47 @@ Costume & Texture: The character is wearing ${fields.clothing || '[Describe Clot
 Facial Features/Accessory: Detail the face as ${fields.facialFeatures || '[e.g., aged, stern, wearing a mechanical mask]'}. Add accessories like ${fields.accessories || '[e.g., pouches, holstered weapon]'}.
 LIGHTING CRUCIAL: The lighting must be perfect, flat, neutral, studio-diffuse lighting. There must be NO heavy shadows, NO harsh directional light, NO dramatic rim lighting, and NO baked ambient occlusion. The light should be bright, even, and reveal all textures clearly from every angle.
 Background: The character is isolated on a perfectly flat, uniform, neutral light gray color background (no floor texture, no environment) to ensure easy isolation for 3D conversion.`;
+}
+
+async function callGeminiImageGen(imageDataUri: string, prompt: string): Promise<string> {
+  let base64Data = imageDataUri;
+  if (base64Data.includes(',')) {
+    base64Data = base64Data.split(',')[1] ?? base64Data;
+  }
+
+  const res = await fetch(`${GEMINI_BASE}/models/${MODEL}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { inlineData: { mimeType: 'image/png', data: base64Data } },
+          { text: prompt },
+        ],
+      }],
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        maxOutputTokens: 8192,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Gemini error ${res.status}: ${text}`);
+  }
+
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts ?? [];
+
+  for (const part of parts) {
+    if (part.inlineData?.data) {
+      const mime = part.inlineData.mimeType ?? 'image/png';
+      return `data:${mime};base64,${part.inlineData.data}`;
+    }
+  }
+
+  throw new Error('No image returned from Gemini');
 }
 
 export default function EnhancePanel() {
@@ -61,23 +103,13 @@ export default function EnhancePanel() {
         accessories,
         facialFeatures,
       });
-      const res = await fetch(`${API_BASE}/api/enhance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: screenshot, prompt }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Enhance failed');
-      if (data.image) {
-        setEnhanceResult(data.image);
-        addToImageLibrary(data.image);
-      } else if (data.error) {
-        setEnhanceResult(data.error);
-      }
+      const imageDataUri = await callGeminiImageGen(screenshot, prompt);
+      setEnhanceResult(imageDataUri);
+      addToImageLibrary(imageDataUri);
     } catch (err) {
       console.error(err);
       setEnhanceResult(
-        err instanceof Error ? err.message : 'Enhance failed',
+        err instanceof Error ? err.message : 'Generation failed',
       );
     } finally {
       setEnhanceLoading(false);
