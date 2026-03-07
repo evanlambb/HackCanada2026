@@ -69,12 +69,14 @@ export class EditModeEngine {
   private getEditMesh(): THREE.Mesh | null {
     const id = useEditorStore.getState().editObjectId;
     if (!id) return null;
-    return this.sceneManager.getMeshById(id) ?? null;
+    const obj = this.sceneManager.getMeshById(id);
+    return (obj as THREE.Mesh)?.isMesh ? (obj as THREE.Mesh) : null;
   }
 
   enterEditMode(objectId: string) {
     this.exitEditMode();
-    const mesh = this.sceneManager.getMeshById(objectId);
+    const obj = this.sceneManager.getMeshById(objectId);
+    const mesh = (obj as THREE.Mesh)?.isMesh ? (obj as THREE.Mesh) : null;
     if (!mesh) return;
 
     let geo = mesh.geometry;

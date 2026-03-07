@@ -14,6 +14,11 @@ export type EditorMode = 'object' | 'edit';
 export type EditSubMode = 'vertex' | 'edge' | 'face';
 export type ActiveTool = 'select' | 'move' | 'rotate' | 'scale' | 'extrude';
 
+export interface AnimationData {
+  name: string;
+  duration: number;
+}
+
 export interface SceneObject {
   id: string;
   name: string;
@@ -26,4 +31,6 @@ export interface SceneObject {
   children: string[];
   parent: string | null;
   visible: boolean;
+  animations?: AnimationData[];
+  activeAnimation?: string | null;
 }

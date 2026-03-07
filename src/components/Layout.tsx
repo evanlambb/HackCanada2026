@@ -4,6 +4,7 @@ import 'flexlayout-react/style/dark.css';
 import SceneViewPanel from './panels/SceneViewPanel';
 import HierarchyPanel from './panels/HierarchyPanel';
 import InspectorPanel from './panels/InspectorPanel';
+import AnimationsPanel from './panels/AnimationsPanel';
 import MeshGenPanel from './panels/MeshGenPanel';
 
 const layoutJson: IJsonModel = {
@@ -39,10 +40,24 @@ const layoutJson: IJsonModel = {
         ],
       },
       {
-        type: 'tabset',
+        // Nested row → FlexLayout alternates direction, so this is vertical
+        type: 'row',
         weight: 58,
         children: [
-          { type: 'tab', name: 'Scene View', component: 'sceneView' },
+          {
+            type: 'tabset',
+            weight: 75,
+            children: [
+              { type: 'tab', name: 'Scene View', component: 'sceneView' },
+            ],
+          },
+          {
+            type: 'tabset',
+            weight: 25,
+            children: [
+              { type: 'tab', name: 'Animation Gen', component: 'animations' },
+            ],
+          },
         ],
       },
       {
@@ -67,6 +82,8 @@ export default function EditorLayout() {
         return <HierarchyPanel />;
       case 'inspector':
         return <InspectorPanel />;
+      case 'animations':
+        return <AnimationsPanel />;
       case 'meshGen':
         return <MeshGenPanel />;
       default:
