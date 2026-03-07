@@ -33,4 +33,6 @@ export interface SceneObject {
   visible: boolean;
   animations?: AnimationData[];
   activeAnimation?: string | null;
+  rigTaskId?: string | null;
+  meshyTaskId?: string | null;
 }

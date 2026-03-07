@@ -17,6 +17,15 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
+        '/api/gemini': {
+          target: 'https://generativelanguage.googleapis.com',
+          changeOrigin: true,
+          rewrite: (path) => {
+            const rewritten = path.replace(/^\/api\/gemini/, '/v1beta');
+            const sep = rewritten.includes('?') ? '&' : '?';
+            return `${rewritten}${sep}key=${env.GEMINI_API_KEY}`;
+          },
+        },
         '/api/proxy-download': {
           target: 'https://assets.meshy.ai',
           changeOrigin: true,
