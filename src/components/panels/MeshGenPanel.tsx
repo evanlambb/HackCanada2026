@@ -56,6 +56,11 @@ export default function MeshGenPanel() {
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
+    const textData = e.dataTransfer.getData('text/plain');
+    if (textData && textData.startsWith('data:image')) {
+      setImages((prev) => ({ ...prev, [activeSlot]: textData }));
+      return;
+    }
     const f = e.dataTransfer.files[0];
     if (f) handleFile(f);
   }, [activeSlot]);

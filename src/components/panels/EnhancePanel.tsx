@@ -27,6 +27,9 @@ export default function EnhancePanel() {
   const setEnhanceLoading = useEditorStore((s) => s.setEnhanceLoading);
   const selectedIds = useEditorStore((s) => s.selectedIds);
 
+  const imageLibrary = useEditorStore((s) => s.imageLibrary);
+  const addToImageLibrary = useEditorStore((s) => s.addToImageLibrary);
+
   const [persona, setPersona] = useState('');
   const [clothing, setClothing] = useState('');
   const [accessories, setAccessories] = useState('');
@@ -67,6 +70,7 @@ export default function EnhancePanel() {
       if (!res.ok) throw new Error(data.error ?? 'Enhance failed');
       if (data.image) {
         setEnhanceResult(data.image);
+        addToImageLibrary(data.image);
       } else if (data.error) {
         setEnhanceResult(data.error);
       }
@@ -164,6 +168,29 @@ export default function EnhancePanel() {
               <img src={result as string} alt="Generated character" />
             </div>
           </>
+        )}
+      </div>
+
+      <div className="enhance-panel-section">
+        <div className="enhance-panel-title">Library</div>
+        {imageLibrary.length === 0 ? (
+          <div className="enhance-library-empty">No images generated yet</div>
+        ) : (
+          <div className="enhance-library-grid">
+            {imageLibrary.map((uri, i) => (
+              <img
+                key={i}
+                src={uri}
+                alt={`Generated ${i + 1}`}
+                className="enhance-library-thumb"
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', uri);
+                  e.dataTransfer.effectAllowed = 'copy';
+                }}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

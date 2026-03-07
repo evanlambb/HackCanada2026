@@ -850,6 +850,37 @@ html, body, #root {
   cursor: not-allowed;
 }
 
+.enhance-library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.enhance-library-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 2px solid var(--border-thick);
+  cursor: grab;
+  display: block;
+}
+
+.enhance-library-thumb:hover {
+  border-color: var(--accent);
+}
+
+.enhance-library-thumb:active {
+  cursor: grabbing;
+}
+
+.enhance-library-empty {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 16px 0;
+}
+
 /* ===== ANIMATIONS PANEL ===== */
 .anim-panel {
   height: 100%;
