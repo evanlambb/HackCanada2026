@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { Viewport } from './Viewport';
 import type { SceneManager } from './SceneManager';
 import { useEditorStore } from '../store/editorStore';
-import { buildEdgeList, extrudeFaces, type EdgeData } from './MeshOperations';
+import { buildEdgeList, extrudeFaces, type EdgeData, type ExtrudeResult } from './MeshOperations';
 
 export class EditModeEngine {
   private viewport: Viewport;
@@ -27,6 +27,8 @@ export class EditModeEngine {
   private grabPlane = new THREE.Plane();
   private grabStartWorld = new THREE.Vector3();
   private grabAxisConstraint: 'X' | 'Y' | 'Z' | null = null;
+  private extrudeNormal: THREE.Vector3 | null = null;
+  private extrudeFollowers: Map<number, number> | null = null;
   private axisLine: THREE.Line | null = null;
 
   private unsub: () => void;
@@ -298,6 +300,8 @@ export class EditModeEngine {
       this.grabOrigins = null;
       this.grabVertexSet.clear();
       this.grabAxisConstraint = null;
+      this.extrudeNormal = null;
+      this.extrudeFollowers = null;
       this.removeAxisLine();
       this.viewport.renderer.domElement.style.cursor = '';
       return;
@@ -335,9 +339,12 @@ export class EditModeEngine {
     const inv = mesh.matrixWorld.clone().invert();
     const localDelta = delta.clone().transformDirection(inv);
 
-    if (this.grabAxisConstraint === 'X') { localDelta.y = 0; localDelta.z = 0; }
-    if (this.grabAxisConstraint === 'Y') { localDelta.x = 0; localDelta.z = 0; }
-    if (this.grabAxisConstraint === 'Z') { localDelta.x = 0; localDelta.y = 0; }
+    if (this.extrudeNormal) {
+      const proj = localDelta.dot(this.extrudeNormal);
+      localDelta.copy(this.extrudeNormal).multiplyScalar(proj);
+    } else if (this.grabAxisConstraint === 'X') { localDelta.y = 0; localDelta.z = 0; }
+    else if (this.grabAxisConstraint === 'Y') { localDelta.x = 0; localDelta.z = 0; }
+    else if (this.grabAxisConstraint === 'Z') { localDelta.x = 0; localDelta.y = 0; }
 
     const pos = this.editGeometry.attributes.position;
     let oi = 0;
@@ -346,6 +353,12 @@ export class EditModeEngine {
       pos.setY(vi, this.grabOrigins[oi * 3 + 1] + localDelta.y);
       pos.setZ(vi, this.grabOrigins[oi * 3 + 2] + localDelta.z);
       oi++;
+    }
+    // Sync follower vertices (side-face duplicates) to their master positions
+    if (this.extrudeFollowers) {
+      for (const [follower, master] of this.extrudeFollowers) {
+        pos.setXYZ(follower, pos.getX(master), pos.getY(master), pos.getZ(master));
+      }
     }
     pos.needsUpdate = true;
     this.editGeometry.computeVertexNormals();
@@ -361,6 +374,8 @@ export class EditModeEngine {
     if (!mesh) return;
 
     this.grabAxisConstraint = null;
+    this.extrudeNormal = null;
+    this.extrudeFollowers = null;
     const pos = this.editGeometry.attributes.position;
     const verts = new Set<number>();
 
@@ -427,6 +442,8 @@ export class EditModeEngine {
     this.grabOrigins = null;
     this.grabVertexSet.clear();
     this.grabAxisConstraint = null;
+    this.extrudeNormal = null;
+    this.extrudeFollowers = null;
     this.removeAxisLine();
     this.viewport.renderer.domElement.style.cursor = '';
   }
@@ -631,20 +648,53 @@ export class EditModeEngine {
     return out;
   }
 
-  performExtrude(distance = 0.3) {
+  performExtrude() {
     const state = useEditorStore.getState();
     if (state.editSubMode !== 'face' || state.selectedFaces.size === 0) return;
     if (!this.editGeometry) return;
-    const newGeo = extrudeFaces(this.editGeometry, state.selectedFaces, distance);
     const mesh = this.getEditMesh();
-    if (mesh) {
-      mesh.geometry.dispose();
-      mesh.geometry = newGeo;
-      this.editGeometry = newGeo;
-      this.edges = buildEdgeList(newGeo);
-      state.clearEditSelection();
-      this.rebuildOverlays();
+    if (!mesh) return;
+
+    const result: ExtrudeResult = extrudeFaces(this.editGeometry, state.selectedFaces, 0);
+
+    mesh.geometry.dispose();
+    mesh.geometry = result.geometry;
+    this.editGeometry = result.geometry;
+    this.edges = buildEdgeList(result.geometry);
+
+    // Select the new extruded vertices and enter grab mode along the extrude normal
+    this.grabVertexSet = result.newVertexIndices;
+    const pos = this.editGeometry.attributes.position;
+
+    const origins = new Float32Array(this.grabVertexSet.size * 3);
+    let i = 0;
+    const centroid = new THREE.Vector3();
+    for (const vi of this.grabVertexSet) {
+      origins[i * 3] = pos.getX(vi);
+      origins[i * 3 + 1] = pos.getY(vi);
+      origins[i * 3 + 2] = pos.getZ(vi);
+      centroid.x += pos.getX(vi);
+      centroid.y += pos.getY(vi);
+      centroid.z += pos.getZ(vi);
+      i++;
     }
+    this.grabOrigins = origins;
+    centroid.divideScalar(this.grabVertexSet.size);
+    centroid.applyMatrix4(mesh.matrixWorld);
+
+    const camDir = this.viewport.camera.getWorldDirection(new THREE.Vector3());
+    this.grabPlane.setFromNormalAndCoplanarPoint(camDir, centroid);
+    this.grabStartWorld.copy(centroid);
+    this.grabbing = true;
+    this.grabAxisConstraint = null;
+    this.viewport.renderer.domElement.style.cursor = 'grabbing';
+
+    // Constrain movement to the extrude normal direction
+    this.extrudeNormal = result.normal;
+    this.extrudeFollowers = result.followers;
+
+    state.clearEditSelection();
+    this.rebuildOverlays();
   }
 
   setOverlaysVisible(visible: boolean) {

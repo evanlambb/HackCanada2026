@@ -54,7 +54,7 @@ export class KeyboardManager {
         break;
 
       case 'e':
-        if (store.mode === 'edit') this.editModeEngine.performExtrude(0.3);
+        if (store.mode === 'edit') this.editModeEngine.performExtrude();
         break;
 
       case '1':
