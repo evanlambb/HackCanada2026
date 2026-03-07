@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import { engineRef } from '../../engine/engineRef';
 
@@ -25,12 +25,45 @@ export default function EnhancePanel() {
   const setEnhanceScreenshot = useEditorStore((s) => s.setEnhanceScreenshot);
   const setEnhanceResult = useEditorStore((s) => s.setEnhanceResult);
   const setEnhanceLoading = useEditorStore((s) => s.setEnhanceLoading);
+  const enhanceGallery = useEditorStore((s) => s.enhanceGallery);
+  const setEnhanceGallery = useEditorStore((s) => s.setEnhanceGallery);
+  const addToEnhanceGallery = useEditorStore((s) => s.addToEnhanceGallery);
   const selectedIds = useEditorStore((s) => s.selectedIds);
 
   const [persona, setPersona] = useState('');
   const [clothing, setClothing] = useState('');
   const [accessories, setAccessories] = useState('');
   const [facialFeatures, setFacialFeatures] = useState('');
+  const [showGallery, setShowGallery] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchImages() {
+      try {
+        const res = await fetch(`${API_BASE}/api/enhance/images`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data)) {
+          const withBase = data.map(
+            (img: { filename: string; url: string }) => ({
+              filename: img.filename,
+              url: `${API_BASE}${img.url}`,
+            }),
+          );
+          setEnhanceGallery(withBase);
+        }
+      } catch (err) {
+        console.error('Failed to load enhance images', err);
+      }
+    }
+
+    fetchImages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setEnhanceGallery]);
 
   function handleCapture() {
     const eng = engineRef.current;
@@ -67,6 +100,14 @@ export default function EnhancePanel() {
       if (!res.ok) throw new Error(data.error ?? 'Enhance failed');
       if (data.image) {
         setEnhanceResult(data.image);
+        if (data.filename) {
+          addToEnhanceGallery({
+            filename: data.filename as string,
+            url: `${API_BASE}/api/enhance/images/${encodeURIComponent(
+              data.filename as string,
+            )}`,
+          });
+        }
       } else if (data.error) {
         setEnhanceResult(data.error);
       }
@@ -166,6 +207,41 @@ export default function EnhancePanel() {
           </>
         )}
       </div>
+
+      {enhanceGallery.length > 0 && (
+        <div className="enhance-panel-section enhance-gallery">
+          <button
+            type="button"
+            className="enhance-gallery-header"
+            onClick={() => setShowGallery((v) => !v)}
+          >
+            <span>Generated Images</span>
+            <span className="enhance-gallery-count">
+              ({enhanceGallery.length})
+            </span>
+            <span className="enhance-gallery-toggle">
+              {showGallery ? '▾' : '▸'}
+            </span>
+          </button>
+          {showGallery && (
+            <div className="enhance-gallery-grid">
+              {enhanceGallery.map((img) => (
+                <div key={img.filename} className="enhance-gallery-thumb">
+                  <img
+                    src={img.url}
+                    alt={img.filename}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', img.url);
+                      e.dataTransfer.effectAllowed = 'copy';
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

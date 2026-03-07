@@ -90,6 +90,52 @@ app.post('/api/enhance', async (req, res) => {
   }
 });
 
+app.get('/api/enhance/images', async (_req, res) => {
+  try {
+    ensureImagesDir();
+    const files = await fs.promises.readdir(IMAGES_DIR);
+    const enhancePngs = files
+      .filter((f) => f.startsWith('enhance-') && f.toLowerCase().endsWith('.png'))
+      .sort((a, b) => {
+        const aNum = Number(a.slice('enhance-'.length, -'.png'.length));
+        const bNum = Number(b.slice('enhance-'.length, -'.png'.length));
+        if (Number.isNaN(aNum) || Number.isNaN(bNum)) return 0;
+        return bNum - aNum;
+      });
+
+    const images = enhancePngs.map((filename) => ({
+      filename,
+      url: `/api/enhance/images/${encodeURIComponent(filename)}`,
+    }));
+
+    res.json(images);
+  } catch (err) {
+    console.error('List enhance images error:', err);
+    res.status(500).json({ error: 'Failed to list enhance images' });
+  }
+});
+
+app.get('/api/enhance/images/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    if (!/^enhance-\d+\.png$/.test(filename)) {
+      res.status(400).json({ error: 'Invalid filename' });
+      return;
+    }
+
+    const filePath = path.join(IMAGES_DIR, filename);
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({ error: 'Image not found' });
+      return;
+    }
+
+    res.sendFile(filePath);
+  } catch (err) {
+    console.error('Serve enhance image error:', err);
+    res.status(500).json({ error: 'Failed to serve image' });
+  }
+});
+
 const PORT = process.env.PORT ?? 3001;
 app.listen(PORT, () => {
   console.log(`Enhance server listening on http://localhost:${PORT}`);

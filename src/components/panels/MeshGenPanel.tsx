@@ -52,12 +52,49 @@ export default function MeshGenPanel() {
     e.target.value = '';
   }
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const f = e.dataTransfer.files[0];
-    if (f) handleFile(f);
-  }, [activeSlot]);
+  async function handleUrlDrop(url: string, slot: ViewSlot) {
+    try {
+      if (!url) return;
+      if (url.startsWith('data:')) {
+        setImages((prev) => ({ ...prev, [slot]: url }));
+        return;
+      }
+
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result;
+        if (typeof result === 'string') {
+          setImages((prev) => ({ ...prev, [slot]: result }));
+        }
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error('Failed to handle URL drop in MeshGenPanel:', err);
+    }
+  }
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+
+      const dt = e.dataTransfer;
+      const file = dt.files && dt.files[0];
+      if (file) {
+        handleFile(file);
+        return;
+      }
+
+      const url = dt.getData('text/plain');
+      if (url) {
+        void handleUrlDrop(url, activeSlot);
+      }
+    },
+    [activeSlot],
+  );
 
   function clearSlot(slot: ViewSlot) {
     setImages((prev) => ({ ...prev, [slot]: null }));

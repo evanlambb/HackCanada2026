@@ -43,9 +43,12 @@ export interface EditorState {
   enhanceScreenshot: string | null;
   enhanceResult: string | null;
   enhanceLoading: boolean;
+  enhanceGallery: { filename: string; url: string }[];
   setEnhanceScreenshot: (s: string | null) => void;
   setEnhanceResult: (s: string | null) => void;
   setEnhanceLoading: (loading: boolean) => void;
+  setEnhanceGallery: (images: { filename: string; url: string }[]) => void;
+  addToEnhanceGallery: (image: { filename: string; url: string }) => void;
 
   peekNextId: () => string;
   addObject: (type: GeometryType, position?: Vec3) => string;
@@ -85,9 +88,18 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   enhanceScreenshot: null,
   enhanceResult: null,
   enhanceLoading: false,
+  enhanceGallery: [],
   setEnhanceScreenshot: (s) => set({ enhanceScreenshot: s }),
   setEnhanceResult: (s) => set({ enhanceResult: s }),
   setEnhanceLoading: (loading) => set({ enhanceLoading: loading }),
+  setEnhanceGallery: (images) => set({ enhanceGallery: images }),
+  addToEnhanceGallery: (image) =>
+    set((s) => ({
+      enhanceGallery: [
+        image,
+        ...s.enhanceGallery.filter((existing) => existing.filename !== image.filename),
+      ],
+    })),
 
   peekNextId: () => peekId(),
 
