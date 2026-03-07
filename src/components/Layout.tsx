@@ -41,7 +41,7 @@ const layoutJson: IJsonModel = {
             type: 'tabset',
             weight: 25,
             children: [
-              { type: 'tab', name: 'Animations', component: 'animations' },
+              { type: 'tab', name: 'Animation Gen', component: 'animations' },
             ],
           },
         ],
