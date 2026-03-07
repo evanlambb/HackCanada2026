@@ -222,6 +222,34 @@ html, body, #root {
   opacity: 0.5;
 }
 
+/* VR button -- override Three.js VRButton inline styles */
+.scene-canvas .vr-button {
+  font-family: var(--mono) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  border: 2px solid var(--border-thick) !important;
+  background: rgba(10, 10, 10, 0.85) !important;
+  color: var(--text-dim) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  padding: 8px 20px !important;
+  cursor: pointer !important;
+  position: absolute !important;
+  bottom: 36px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+  z-index: 10 !important;
+}
+
+.scene-canvas .vr-button:hover {
+  background: var(--accent) !important;
+  color: #000 !important;
+  border-color: var(--accent) !important;
+}
+
 /* ===== HIERARCHY PANEL ===== */
 .hierarchy-panel {
   height: 100%;
