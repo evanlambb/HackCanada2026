@@ -4,6 +4,7 @@ import 'flexlayout-react/style/dark.css';
 import SceneViewPanel from './panels/SceneViewPanel';
 import HierarchyPanel from './panels/HierarchyPanel';
 import InspectorPanel from './panels/InspectorPanel';
+import MeshGenPanel from './panels/MeshGenPanel';
 
 const layoutJson: IJsonModel = {
   global: {
@@ -18,10 +19,23 @@ const layoutJson: IJsonModel = {
     weight: 100,
     children: [
       {
-        type: 'tabset',
+        type: 'row',
         weight: 18,
         children: [
-          { type: 'tab', name: 'Hierarchy', component: 'hierarchy' },
+          {
+            type: 'tabset',
+            weight: 50,
+            children: [
+              { type: 'tab', name: 'Hierarchy', component: 'hierarchy' },
+            ],
+          },
+          {
+            type: 'tabset',
+            weight: 50,
+            children: [
+              { type: 'tab', name: 'Mesh Gen', component: 'meshGen' },
+            ],
+          },
         ],
       },
       {
@@ -53,6 +67,8 @@ export default function EditorLayout() {
         return <HierarchyPanel />;
       case 'inspector':
         return <InspectorPanel />;
+      case 'meshGen':
+        return <MeshGenPanel />;
       default:
         return null;
     }
