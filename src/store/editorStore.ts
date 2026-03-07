@@ -40,6 +40,13 @@ export interface EditorState {
   selectedEdges: Set<number>;
   selectedFaces: Set<number>;
 
+  enhanceScreenshot: string | null;
+  enhanceResult: string | null;
+  enhanceLoading: boolean;
+  setEnhanceScreenshot: (s: string | null) => void;
+  setEnhanceResult: (s: string | null) => void;
+  setEnhanceLoading: (loading: boolean) => void;
+
   peekNextId: () => string;
   addObject: (type: GeometryType, position?: Vec3) => string;
   addImportedObject: (name: string, animations?: AnimationData[]) => string;
@@ -77,6 +84,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedVertices: new Set(),
   selectedEdges: new Set(),
   selectedFaces: new Set(),
+
+  enhanceScreenshot: null,
+  enhanceResult: null,
+  enhanceLoading: false,
+  setEnhanceScreenshot: (s) => set({ enhanceScreenshot: s }),
+  setEnhanceResult: (s) => set({ enhanceResult: s }),
+  setEnhanceLoading: (loading) => set({ enhanceLoading: loading }),
 
   peekNextId: () => peekId(),
 
