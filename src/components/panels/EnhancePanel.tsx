@@ -25,7 +25,7 @@ export default function EnhancePanel() {
   const setEnhanceScreenshot = useEditorStore((s) => s.setEnhanceScreenshot);
   const setEnhanceResult = useEditorStore((s) => s.setEnhanceResult);
   const setEnhanceLoading = useEditorStore((s) => s.setEnhanceLoading);
-  const objectCount = useEditorStore((s) => Object.keys(s.objects).length);
+  const selectedIds = useEditorStore((s) => s.selectedIds);
 
   const [persona, setPersona] = useState('');
   const [clothing, setClothing] = useState('');
@@ -43,7 +43,7 @@ export default function EnhancePanel() {
       eng.transformEngine.controls.getHelper().visible = true;
       eng.editModeEngine.setOverlaysVisible(true);
     };
-    const dataUrl = eng.viewport.captureScreenshot(onBefore, onAfter);
+    const dataUrl = eng.viewport.captureScreenshot(onBefore, onAfter, selectedIds);
     setEnhanceScreenshot(dataUrl);
   }
 
@@ -90,8 +90,8 @@ export default function EnhancePanel() {
         <button
           type="button"
           className="enhance-btn"
-          disabled={objectCount === 0}
-          title="Capture current view from Scene View"
+          disabled={selectedIds.length === 0}
+          title="Capture selected object(s) at 3/4 view from Scene View"
           onClick={handleCapture}
         >
           Capture Blockout

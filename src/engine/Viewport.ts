@@ -73,23 +73,64 @@ export class Viewport {
   }
 
   /**
-   * Captures a clean screenshot of the current view (no grid/axes).
+   * Captures a clean screenshot at a fixed 3/4 view (front-right, elevated).
+   * If selectedIds is non-empty, only those meshes are visible and the camera
+   * frames their bounding box; other user meshes are hidden during capture.
    * Call onBefore to hide transform gizmo and edit overlays; onAfter to restore.
    */
   captureScreenshot(
     onBefore?: () => void,
     onAfter?: () => void,
+    selectedIds: string[] = [],
   ): string {
     onBefore?.();
     this.gridHelper.visible = false;
     this.axesHelper.visible = false;
-    const prevBackground = this.scene.background;
+    const prevBg = this.scene.background;
     this.scene.background = new THREE.Color(0xd0d0d0);
+
+    const prevPos = this.camera.position.clone();
+    const prevTarget = this.controls.target.clone();
+
+    const selectedSet = new Set(selectedIds);
+    const hidden: THREE.Object3D[] = [];
+    const box = new THREE.Box3();
+
+    this.scene.traverse((obj) => {
+      if (!(obj as THREE.Mesh).isMesh || !obj.userData.id) return;
+      const id = obj.userData.id as string;
+      if (selectedSet.size > 0) {
+        if (!selectedSet.has(id)) {
+          hidden.push(obj);
+          obj.visible = false;
+        } else {
+          box.expandByObject(obj);
+        }
+      } else {
+        box.expandByObject(obj);
+      }
+    });
+
+    if (!box.isEmpty()) {
+      const center = box.getCenter(new THREE.Vector3());
+      const sphere = box.getBoundingSphere(new THREE.Sphere());
+      const dir = new THREE.Vector3(1, 0.75, 1).normalize();
+      const dist = Math.max(sphere.radius * 2.5, 3);
+      this.camera.position.copy(center).addScaledVector(dir, dist);
+      this.controls.target.copy(center);
+      this.controls.update();
+    }
+
     this.renderer.render(this.scene, this.camera);
     const dataUrl = this.renderer.domElement.toDataURL('image/png');
-    this.scene.background = prevBackground;
+
+    for (const obj of hidden) obj.visible = true;
+    this.scene.background = prevBg;
     this.gridHelper.visible = true;
     this.axesHelper.visible = true;
+    this.camera.position.copy(prevPos);
+    this.controls.target.copy(prevTarget);
+    this.controls.update();
     onAfter?.();
     return dataUrl;
   }
