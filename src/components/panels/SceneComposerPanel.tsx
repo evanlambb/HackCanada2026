@@ -57,6 +57,8 @@ Schema:
 function extractJSON(text: string): string {
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenceMatch) return fenceMatch[1].trim();
+  const objMatch = text.match(/\{[\s\S]*\}/);
+  if (objMatch) return objMatch[0];
   return text.trim();
 }
 
@@ -94,7 +96,7 @@ async function callCompose(
       contents: [{ parts }],
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 16384,
       },
     }),
   });
