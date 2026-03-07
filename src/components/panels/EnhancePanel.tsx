@@ -1,8 +1,7 @@
 import { useState } from 'react';
+import { GoogleGenAI, Modality, type Content, type Part } from '@google/genai';
 import { useEditorStore } from '../../store/editorStore';
 import { engineRef } from '../../engine/engineRef';
-
-const API_BASE = import.meta.env.VITE_ENHANCE_API ?? 'http://localhost:3001';
 
 function buildPrompt(fields: {
   persona: string;
@@ -52,29 +51,34 @@ export default function EnhancePanel() {
     setEnhanceLoading(true);
     setEnhanceResult(null);
     try {
-      const prompt = buildPrompt({
-        persona,
-        clothing,
-        accessories,
-        facialFeatures,
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
+      if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not set in .env');
+
+      let base64Data = screenshot;
+      if (base64Data.includes(',')) base64Data = base64Data.split(',')[1] ?? base64Data;
+
+      const prompt = buildPrompt({ persona, clothing, accessories, facialFeatures });
+      const ai = new GoogleGenAI({ apiKey });
+      const contents: Content = {
+        role: 'user',
+        parts: [
+          { inlineData: { mimeType: 'image/png', data: base64Data } },
+          { text: prompt },
+        ] as Part[],
+      };
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-image-preview',
+        contents,
+        config: { responseModalities: [Modality.TEXT, Modality.IMAGE] },
       });
-      const res = await fetch(`${API_BASE}/api/enhance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: screenshot, prompt }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Enhance failed');
-      if (data.image) {
-        setEnhanceResult(data.image);
-      } else if (data.error) {
-        setEnhanceResult(data.error);
-      }
+
+      const imageData = response.data;
+      if (!imageData) throw new Error(response.text ?? 'No image in response');
+      setEnhanceResult(`data:image/png;base64,${imageData}`);
     } catch (err) {
       console.error(err);
-      setEnhanceResult(
-        err instanceof Error ? err.message : 'Enhance failed',
-      );
+      setEnhanceResult(err instanceof Error ? err.message : 'Enhance failed');
     } finally {
       setEnhanceLoading(false);
     }

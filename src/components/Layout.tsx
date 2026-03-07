@@ -7,6 +7,7 @@ import InspectorPanel from './panels/InspectorPanel';
 import AnimationsPanel from './panels/AnimationsPanel';
 import MeshGenPanel from './panels/MeshGenPanel';
 import EnhancePanel from './panels/EnhancePanel';
+import SceneComposerPanel from './panels/SceneComposerPanel';
 
 const layoutJson: IJsonModel = {
   global: {
@@ -35,6 +36,7 @@ const layoutJson: IJsonModel = {
             type: 'tabset',
             weight: 50,
             children: [
+              { type: 'tab', name: 'Composer', component: 'composer' },
               { type: 'tab', name: 'Mesh Gen', component: 'meshGen' },
             ],
           },
@@ -90,6 +92,8 @@ export default function EditorLayout() {
         return <MeshGenPanel />;
       case 'enhance':
         return <EnhancePanel />;
+      case 'composer':
+        return <SceneComposerPanel />;
       default:
         return null;
     }
