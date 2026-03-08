@@ -25,7 +25,6 @@ function SceneHUD() {
   const setEditSubMode = useEditorStore((s) => s.setEditSubMode);
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const selectedIds = useEditorStore((s) => s.selectedIds);
-
   function toggleMode() {
     if (mode === 'object') {
       if (selectedIds.length === 1) {

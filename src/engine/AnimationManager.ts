@@ -61,6 +61,10 @@ export class AnimationManager {
     this.activeActions.delete(id);
   }
 
+  getAllClips(id: string): THREE.AnimationClip[] {
+    return this.clips.get(id) ?? [];
+  }
+
   dispose() {
     for (const id of [...this.mixers.keys()]) {
       this.remove(id);

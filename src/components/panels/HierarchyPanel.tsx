@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useEditorStore } from '../../store/editorStore';
-import type { GeometryType } from '../../store/types';
+import type { GeometryType, SceneObject } from '../../store/types';
 import { engineRef } from '../../engine/engineRef';
 import { loadModelFile } from '../../engine/ModelLoader';
+import { exportObjectById } from '../../engine/ExportManager';
+import type { ExportFormat } from '../../engine/ExportManager';
 
 const primitives: { type: GeometryType; label: string }[] = [
   { type: 'box', label: 'Cube' },
@@ -90,6 +92,10 @@ function AddMenu() {
   );
 }
 
+function canExport(obj: SceneObject): boolean {
+  return obj.type === 'mesh' || Boolean(obj.animations?.length);
+}
+
 export default function HierarchyPanel() {
   const objects = useEditorStore((s) => s.objects);
   const selectedIds = useEditorStore((s) => s.selectedIds);
@@ -100,6 +106,24 @@ export default function HierarchyPanel() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [exportMenuId, setExportMenuId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!exportMenuId) return;
+    function close(e: MouseEvent) {
+      if (!(e.target as Element).closest('.hierarchy-export-wrap')) {
+        setExportMenuId(null);
+      }
+    }
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [exportMenuId]);
+
+  async function handleExport(obj: SceneObject, format: ExportFormat) {
+    setExportMenuId(null);
+    if (!engineRef.current) return;
+    await exportObjectById(engineRef.current.sceneManager, obj.id, obj.name, format);
+  }
 
   const sorted = Object.values(objects).sort((a, b) =>
     a.name.localeCompare(b.name),
@@ -159,6 +183,33 @@ export default function HierarchyPanel() {
               />
             ) : (
               <span className="name">{obj.name}</span>
+            )}
+            {canExport(obj) && (
+              <div
+                className="hierarchy-export-wrap"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="hierarchy-export-btn"
+                  onClick={() => setExportMenuId(exportMenuId === obj.id ? null : obj.id)}
+                  title="Export"
+                >
+                  ↓
+                </button>
+                {exportMenuId === obj.id && (
+                  <div className="hierarchy-export-menu">
+                    {(['glb', 'fbx', 'obj'] as ExportFormat[]).map((fmt) => (
+                      <button
+                        key={fmt}
+                        className="add-menu-item"
+                        onClick={() => handleExport(obj, fmt)}
+                      >
+                        {fmt.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         ))}
