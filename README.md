@@ -14,3 +14,7 @@ A fully functional AI native Blender alternative built with Three.js, Meshy.ai, 
 1. Clone the repo `git clone https://github.com/evanlambb/HackCanada2026.git`
 2. In the root directory of the project install the dependencies using `npm i`
 3. Run the project using `npm run dev` and go to localhost port it launches at
+
+# Demo
+https://github.com/user-attachments/assets/e91ee090-1b1c-4035-ae61-e3ea7bd50d89
+
