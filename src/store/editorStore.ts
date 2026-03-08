@@ -49,6 +49,15 @@ export interface EditorState {
   setEnhanceLoading: (loading: boolean) => void;
   addToImageLibrary: (dataUri: string) => void;
 
+  composerPrompt: string;
+  composerLoading: boolean;
+  composerError: string | null;
+  composerRefImage: string | null;
+  setComposerPrompt: (s: string) => void;
+  setComposerLoading: (b: boolean) => void;
+  setComposerError: (s: string | null) => void;
+  setComposerRefImage: (s: string | null) => void;
+
   peekNextId: () => string;
   addObject: (type: GeometryType, position?: Vec3) => string;
   addImportedObject: (name: string, animations?: AnimationData[]) => string;
@@ -96,6 +105,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setEnhanceLoading: (loading) => set({ enhanceLoading: loading }),
   addToImageLibrary: (dataUri) =>
     set((s) => ({ imageLibrary: [dataUri, ...s.imageLibrary] })),
+
+  composerPrompt: '',
+  composerLoading: false,
+  composerError: null,
+  composerRefImage: null,
+  setComposerPrompt: (s) => set({ composerPrompt: s }),
+  setComposerLoading: (b) => set({ composerLoading: b }),
+  setComposerError: (s) => set({ composerError: s }),
+  setComposerRefImage: (s) => set({ composerRefImage: s }),
 
   peekNextId: () => peekId(),
 

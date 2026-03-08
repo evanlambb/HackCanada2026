@@ -1200,6 +1200,302 @@ html, body, #root {
   margin-top: 1px;
 }
 
+/* ===== SCENE COMPOSER PANEL ===== */
+.composer-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.composer-section {
+  border-bottom: 2px solid var(--border-thick);
+  padding: 12px;
+  flex-shrink: 0;
+}
+
+.composer-section:last-child {
+  border-bottom: none;
+}
+
+.composer-section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.composer-textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 2px solid var(--border-thin);
+  color: var(--text);
+  padding: 8px 10px;
+  font-family: var(--sans);
+  font-size: 12px;
+  resize: vertical;
+  outline: none;
+  min-height: 72px;
+}
+
+.composer-textarea:focus {
+  border-color: var(--accent);
+}
+
+.composer-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.composer-textarea:disabled {
+  opacity: 0.5;
+}
+
+.composer-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.composer-example-btn {
+  padding: 3px 8px;
+  border: 2px solid var(--border-thick);
+  background: var(--bg-surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.composer-example-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.composer-example-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.composer-upload-btn {
+  width: 100%;
+  padding: 8px;
+  border: 2px dashed var(--border-thick);
+  background: var(--bg-input);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.composer-upload-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.composer-upload-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.composer-img-preview {
+  position: relative;
+  width: 100%;
+}
+
+.composer-img-preview img {
+  width: 100%;
+  max-height: 100px;
+  object-fit: contain;
+  background: var(--bg-input);
+  border: 2px solid var(--border-thin);
+  display: block;
+}
+
+.composer-img-clear {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-thick);
+  background: var(--bg-base);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.composer-img-clear:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: #000;
+}
+
+.composer-generate-btn {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid var(--accent);
+  background: var(--accent);
+  color: #000;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.composer-generate-btn:hover:not(:disabled) {
+  background: #c8e600;
+}
+
+.composer-generate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.composer-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: composer-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes composer-spin {
+  to { transform: rotate(360deg); }
+}
+
+.composer-clear-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  border: 2px solid var(--border-thick);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.composer-clear-btn:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.composer-selected-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.composer-selected-label span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.composer-selected-none {
+  opacity: 0.5;
+}
+
+.composer-modify-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 2px solid var(--border-thin);
+  color: var(--text);
+  padding: 7px 10px;
+  font-family: var(--sans);
+  font-size: 12px;
+  outline: none;
+  margin-bottom: 8px;
+}
+
+.composer-modify-input:focus {
+  border-color: var(--accent);
+}
+
+.composer-modify-input::placeholder {
+  color: var(--text-muted);
+}
+
+.composer-modify-input:disabled {
+  opacity: 0.5;
+}
+
+.composer-modify-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.composer-mod-btn {
+  flex: 1;
+  padding: 7px 6px;
+  border: 2px solid var(--border-thick);
+  background: var(--bg-surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.composer-mod-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.composer-mod-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.composer-mod-btn-all {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.composer-mod-btn-all:hover:not(:disabled) {
+  background: rgba(224, 255, 0, 0.2);
+  color: var(--accent);
+}
+
+.composer-error {
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--red);
+  word-break: break-word;
+  border-top: 2px solid var(--border-thick);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

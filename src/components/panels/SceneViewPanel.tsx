@@ -92,7 +92,7 @@ function SceneHUD() {
                 className={`hud-btn ${activeTool === 'extrude' ? 'active' : ''}`}
                 onClick={() => {
                   setActiveTool('extrude');
-                  engineRef.current?.editModeEngine.performExtrude(0.3);
+                  engineRef.current?.editModeEngine.performExtrude();
                 }}
               >
                 Extr<span className="key">E</span>
