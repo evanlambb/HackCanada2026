@@ -31,10 +31,10 @@ export class SceneManager {
 
   private syncObjects(
     objects: Record<string, SceneObject>,
-    prev: Record<string, SceneObject>,
+    prev: Record<string, SceneObject> | undefined,
   ) {
     const cur = new Set(Object.keys(objects));
-    const old = new Set(Object.keys(prev));
+    const old = new Set(Object.keys(prev ?? {}));
     for (const id of cur) {
       if (!old.has(id)) this.addMesh(objects[id]);
     }
@@ -44,6 +44,32 @@ export class SceneManager {
     for (const id of cur) {
       if (old.has(id) && objects[id] !== prev[id]) this.updateMesh(objects[id]);
     }
+  }
+
+  /**
+   * Preload asset data into caches before objects are added to the store.
+   * Used when restoring a project: call this for each loaded asset, then restoreState.
+   */
+  preloadAsset(
+    id: string,
+    scene: THREE.Object3D | null,
+    geometry: THREE.BufferGeometry,
+    clips: THREE.AnimationClip[],
+  ): void {
+    if (scene) {
+      this.sceneCache.set(id, scene);
+      if (clips.length > 0) this.clipsCache.set(id, clips);
+    } else {
+      this.geometryCache.set(id, geometry);
+    }
+  }
+
+  /**
+   * Returns all scene objects (id -> Object3D) for GLB export.
+   * Export all objects so edited primitives and imported meshes are persisted.
+   */
+  getExportableObjects(): Map<string, THREE.Object3D> {
+    return new Map(this.meshMap);
   }
 
   /** Import a non-animated mesh (geometry only). */

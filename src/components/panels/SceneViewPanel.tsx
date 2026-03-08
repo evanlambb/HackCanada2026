@@ -6,8 +6,15 @@ import { TransformEngine } from '../../engine/TransformEngine';
 import { EditModeEngine } from '../../engine/EditModeEngine';
 import { KeyboardManager } from '../../engine/KeyboardManager';
 import { engineRef } from '../../engine/engineRef';
+import {
+  loadProject,
+  saveProject,
+  parseGlbAsset,
+} from '../../engine/ProjectStorage';
 import { useEditorStore } from '../../store/editorStore';
 import type { ActiveTool } from '../../store/types';
+
+const AUTO_SAVE_DEBOUNCE_MS = 2000;
 
 const tools: { tool: ActiveTool; label: string; key: string }[] = [
   { tool: 'select', label: 'Sel', key: '' },
@@ -157,7 +164,69 @@ export default function SceneViewPanel() {
       keyboardManager,
     };
 
+    let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+    const doSave = () => {
+      const ref = engineRef.current;
+      if (!ref) return Promise.resolve();
+      const getState = () => useEditorStore.getState();
+      return saveProject(getState, ref.sceneManager, ref.viewport);
+    };
+    const scheduleSave = () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        saveTimeout = null;
+        doSave().catch((err) => console.warn('Auto-save failed:', err));
+      }, AUTO_SAVE_DEBOUNCE_MS);
+    };
+
+    const unsubSave = useEditorStore.subscribe(scheduleSave);
+
+    const saveOnUnload = () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = null;
+      doSave().catch(() => {});
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveOnUnload();
+    };
+    window.addEventListener('pagehide', saveOnUnload);
+    window.addEventListener('visibilitychange', onVisibilityChange);
+
+    (async () => {
+      const project = await loadProject();
+      if (!project) return;
+      const objectIds = new Set(Object.keys(project.state.objects));
+      try {
+        for (const [id, buffer] of project.assets) {
+          if (!objectIds.has(id)) continue;
+          try {
+            const { geometry, scene, clips } = await parseGlbAsset(buffer);
+            sceneManager.preloadAsset(id, scene, geometry, clips);
+          } catch (err) {
+            console.warn(`Restore asset ${id} failed:`, err);
+          }
+        }
+        useEditorStore.getState().restoreState({
+          objects: project.state.objects,
+          imageLibrary: project.state.imageLibrary,
+          enhanceScreenshot: project.state.enhanceScreenshot,
+          enhanceResult: project.state.enhanceResult,
+          nextIdCounter: project.state.nextIdCounter,
+        });
+        viewport.setCameraState(
+          project.state.cameraPosition,
+          project.state.cameraTarget,
+        );
+      } catch (err) {
+        console.warn('Restore project failed:', err);
+      }
+    })();
+
     return () => {
+      window.removeEventListener('pagehide', saveOnUnload);
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      unsubSave();
+      if (saveTimeout) clearTimeout(saveTimeout);
       keyboardManager.dispose();
       editModeEngine.dispose();
       transformEngine.dispose();

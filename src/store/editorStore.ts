@@ -16,6 +16,12 @@ function generateId(): string {
 function peekId(): string {
   return `obj_${nextId}`;
 }
+export function getNextIdCounter(): number {
+  return nextId;
+}
+export function setNextIdCounter(n: number): void {
+  nextId = Math.max(1, n);
+}
 
 const geoNames: Record<GeometryType, string> = {
   box: 'Cube',
@@ -50,6 +56,15 @@ export interface EditorState {
   addToImageLibrary: (dataUri: string) => void;
 
   peekNextId: () => string;
+  getNextIdCounter: () => number;
+  setNextIdCounter: (n: number) => void;
+  restoreState: (payload: {
+    objects: Record<string, SceneObject>;
+    imageLibrary: string[];
+    enhanceScreenshot: string | null;
+    enhanceResult: string | null;
+    nextIdCounter: number;
+  }) => void;
   addObject: (type: GeometryType, position?: Vec3) => string;
   addImportedObject: (name: string, animations?: AnimationData[]) => string;
   setActiveAnimation: (objectId: string, animationName: string | null) => void;
@@ -98,6 +113,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set((s) => ({ imageLibrary: [dataUri, ...s.imageLibrary] })),
 
   peekNextId: () => peekId(),
+  getNextIdCounter: () => getNextIdCounter(),
+  setNextIdCounter: (n) => setNextIdCounter(n),
+  restoreState: (payload) => {
+    setNextIdCounter(payload.nextIdCounter);
+    set({
+      objects: payload.objects,
+      imageLibrary: payload.imageLibrary,
+      enhanceScreenshot: payload.enhanceScreenshot,
+      enhanceResult: payload.enhanceResult,
+    });
+  },
 
   addObject: (type, position = [0, 0, 0]) => {
     const id = generateId();

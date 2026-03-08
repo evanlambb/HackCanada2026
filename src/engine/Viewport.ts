@@ -80,6 +80,24 @@ export class Viewport {
     return this._lastDelta;
   }
 
+  getCameraState(): { position: [number, number, number]; target: [number, number, number] } {
+    const p = this.camera.position;
+    const t = this.controls.target;
+    return {
+      position: [p.x, p.y, p.z],
+      target: [t.x, t.y, t.z],
+    };
+  }
+
+  setCameraState(
+    position: [number, number, number],
+    target: [number, number, number],
+  ): void {
+    this.camera.position.set(position[0], position[1], position[2]);
+    this.controls.target.set(target[0], target[1], target[2]);
+    this.controls.update();
+  }
+
   onRender(cb: () => void) {
     this.renderCallbacks.push(cb);
   }
